@@ -1,0 +1,11 @@
+[Unit]
+Description=Met à jour les temps d'utiliastions
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Restart=no
+ExecStart=
+
+[Install]
+WantedBy=multi-user.target

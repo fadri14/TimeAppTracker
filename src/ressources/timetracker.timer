@@ -1,0 +1,8 @@
+[Unit]
+Description=Appelle le service toutes les minutes pour augmenter de 1 le temps de chaque application utilisée
+
+[Timer]
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=timers.target
