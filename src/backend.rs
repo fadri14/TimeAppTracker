@@ -1,23 +1,44 @@
 use std::process::Command;
-use rusqlite::{params, Connection, Result};
+use std::env;
+use rusqlite::{Connection, Result};
 
 pub fn update() -> Result<()> {
-    let conn = create_database()?;
+    let conn = connect_database()?;
     delete_old_data(&conn)?;
     increment_time(&conn)?;
 
     Ok(())
 }
 
-fn create_database() -> Result<Connection> {
-    let conn = Connection::open("time_app.db")?;
+pub fn connect_database() -> Result<Connection> {
+    // Si la variable HOME est bien définie alors on stocke la base de données dans le dossier personnelle
+    // Sinon, elle stocké dans le répertoire courant
+    let mut path = String::new();
+    match env::var("HOME") {
+        Ok(val) if val.contains("/home") => {
+            path.push_str(&val);
+            path.push_str("/time_app.db")
+        }
+        _ => path.push_str("time_app.db"),
+    }
 
+    let conn = Connection::open(path)?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS time (
             date DATE PRIMARY KEY,
             main INTEGER DEFAULT 0,
             alacritty INTEGER DEFAULT 0,
-            librewolf INTEGER DEFAULT 0
+            nvim INTEGER DEFAULT 0,
+            librewolf INTEGER DEFAULT 0,
+            freetube INTEGER DEFAULT 0,
+            [signal-desktop] INTEGER DEFAULT 0,
+            netflix INTEGER DEFAULT 0,
+            xournalpp INTEGER DEFAULT 0,
+            spotube INTEGER DEFAULT 0,
+            nautilus INTEGER DEFAULT 0,
+            [gnome-evince] INTEGER DEFAULT 0,
+            calculator INTEGER DEFAULT 0,
+            ranger INTEGER DEFAULT 0
         )",
         (),
     )?;
@@ -41,6 +62,7 @@ fn increment_time(conn: &Connection) -> Result<()> {
     update_values(&column_names, &mut values);
 
     let query = format_query(column_names, values);
+    println!("le requête : {}", query);
     conn.execute(&query, [])?;
 
     Ok(())
@@ -70,7 +92,7 @@ fn get_colmn_name(conn: &Connection) -> Result<Vec<String>> {
 
     // Parcourir les résultats et remplir le vecteur
     for column_name in column_info_iter {
-        column_names.push(column_name?);
+        column_names.push("[".to_string() + &column_name? + "]");
     }
 
     column_names.remove(0);
@@ -132,7 +154,11 @@ fn format_query(names: Vec<String>, values: Vec<i32>) -> String {
     format!("INSERT INTO time (date, {}) VALUES (CURRENT_DATE, {})", names_query, values_query)
 }
 
-fn app_running(name: &str) -> bool {
+fn app_running(name: &String) -> bool {
+    let start = 1;
+    let end = name.len()-1;
+    let name = &name[start..end];
+
     if name == "main" {
         return true;
     }

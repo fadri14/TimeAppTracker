@@ -5,7 +5,6 @@ Description=Met à jour les temps d'utiliastions
 Type=oneshot
 RemainAfterExit=yes
 Restart=no
-ExecStart=
-
-[Install]
-WantedBy=multi-user.target
+ExecStart=/usr/local/bin/timetracker
+User=adrien
+Group=adrien
