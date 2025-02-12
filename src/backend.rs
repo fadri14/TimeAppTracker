@@ -32,13 +32,13 @@ pub fn connect_database() -> Result<Connection> {
             librewolf INTEGER DEFAULT 0,
             freetube INTEGER DEFAULT 0,
             [signal-desktop] INTEGER DEFAULT 0,
+            discord INTEGER DEFAULT 0,
             netflix INTEGER DEFAULT 0,
             xournalpp INTEGER DEFAULT 0,
             spotube INTEGER DEFAULT 0,
             nautilus INTEGER DEFAULT 0,
-            [gnome-evince] INTEGER DEFAULT 0,
-            calculator INTEGER DEFAULT 0,
-            ranger INTEGER DEFAULT 0
+            [gnome-calculator] INTEGER DEFAULT 0,
+            evince INTEGER DEFAULT 0
         )",
         (),
     )?;
@@ -47,7 +47,7 @@ pub fn connect_database() -> Result<Connection> {
 }
 
 fn increment_time(conn: &Connection) -> Result<()> {
-    let column_names = get_colmn_name(&conn)?;
+    let column_names = get_column_name(&conn)?;
     let mut values = get_values(&conn)?;
 
     if column_names.len() != values.len() {
@@ -62,7 +62,6 @@ fn increment_time(conn: &Connection) -> Result<()> {
     update_values(&column_names, &mut values);
 
     let query = format_query(column_names, values);
-    println!("le requête : {}", query);
     conn.execute(&query, [])?;
 
     Ok(())
@@ -78,7 +77,7 @@ fn delete_old_data(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
-fn get_colmn_name(conn: &Connection) -> Result<Vec<String>> {
+pub fn get_column_name(conn: &Connection) -> Result<Vec<String>> {
     let mut stmt = conn.prepare("PRAGMA table_info(time)")?;
 
     // Exécuter la requête et récupérer les résultats
