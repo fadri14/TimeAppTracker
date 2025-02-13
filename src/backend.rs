@@ -73,7 +73,6 @@ fn increment_time(conn: &Connection) -> Result<()> {
 }
 
 fn delete_old_data(conn: &Connection) -> Result<()> {
-    // Delete rows where the date is older than 28 days
     conn.execute( "DELETE FROM time WHERE JULIANDAY(DATE()) - JULIANDAY(date) > 28", (),)?;
 
     Ok(())
