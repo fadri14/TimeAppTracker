@@ -1,4 +1,4 @@
-# TimeTracker
+# Time App Tracker
 
 ## Description
 This program allows to save the time spent on the pc and the desired applications in a database.
@@ -14,12 +14,11 @@ cargo install time_app_tracker
 ```
 Setting the timer.
 ```
-crontab -e
-```
-
-Write the line below in the file.
-```
-* * * * * timetracker update
+bash -c 'TEMP_CRON_FILE=$(mktemp)
+crontab -l > "$TEMP_CRON_FILE"
+echo "* * * * * $HOME/.cargo/bin/time_app_tracker update" >> "$TEMP_CRON_FILE"
+crontab "$TEMP_CRON_FILE"
+rm "$TEMP_CRON_FILE"'
 ```
 
 ## Use

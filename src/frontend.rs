@@ -56,9 +56,11 @@ pub fn gui() -> Result<()>{
     println!("");
     let date = Utc::now().date_naive() - Duration::days(0);
     let values = get_time_apps(&conn, date)?;
-    println!("\tApplication time for {} : ", date.format("%d-%m-%Y"));
-    for v in values {
-        println!("{}", v);
+    if values.len() > 0 {
+        println!("\tApplication time for {} : ", date.format("%d-%m-%Y"));
+        for v in values {
+            println!("{}", v);
+        }
     }
 
     Ok(())
