@@ -44,9 +44,9 @@ pub fn connect_database() -> Result<Connection> {
             //netflix INTEGER DEFAULT 0,
             //xournalpp INTEGER DEFAULT 0,
             //spotube INTEGER DEFAULT 0,
+            //evince INTEGER DEFAULT 0,
             //nautilus INTEGER DEFAULT 0,
-            //[gnome-calculator] INTEGER DEFAULT 0,
-            //evince INTEGER DEFAULT 0
+            //[gnome-calculator] INTEGER DEFAULT 0
         //)",
         //(),
     //)?;

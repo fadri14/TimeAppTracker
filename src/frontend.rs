@@ -48,7 +48,7 @@ pub fn gui() -> Result<()>{
 
     let values = get_time_main(&conn, 0)?;
 
-    println!("\tPC time: ");
+    println!("\tPC time : ");
     for v in values {
         println!("{}", v);
     }

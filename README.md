@@ -26,7 +26,7 @@ rm "$TEMP_CRON_FILE"'
 time_app_tracker
 ```
 
-### Sample output :
+### Example output :
 ```
 	PC time:
 Thu 13-02-2025 : 5h12
