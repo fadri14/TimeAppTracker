@@ -17,9 +17,9 @@ pub fn connect_database() -> Result<Connection> {
     match env::var("HOME") {
         Ok(val) if val.contains("/home") => {
             path.push_str(&val);
-            path.push_str("/time_app.db")
+            path.push_str("/.time_app.db")
         }
-        _ => path.push_str("time_app.db"),
+        _ => path.push_str(".time_app.db"),
     }
 
     let conn = Connection::open(path)?;
