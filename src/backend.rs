@@ -23,6 +23,7 @@ pub fn connect_database() -> Result<Connection> {
     }
 
     let conn = Connection::open(path)?;
+    //let conn = Connection::open("time_app.db")?; // pour débugger le backend
     conn.execute(
         "CREATE TABLE IF NOT EXISTS time (
             date DATE PRIMARY KEY,

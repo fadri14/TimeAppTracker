@@ -25,13 +25,13 @@ impl Time {
 
     fn get_day(&self) -> String {
         match self.date.weekday() {
-            Weekday::Mon => String::from("lundi   "),
-            Weekday::Tue => String::from("mardi   "),
-            Weekday::Wed => String::from("mercredi"),
-            Weekday::Thu => String::from("jeudi   "),
-            Weekday::Fri => String::from("vendredi"),
-            Weekday::Sat => String::from("samedi  "),
-            Weekday::Sun => String::from("dimanche"),
+            Weekday::Mon => String::from("Lundi   "),
+            Weekday::Tue => String::from("Mardi   "),
+            Weekday::Wed => String::from("Mercredi"),
+            Weekday::Thu => String::from("Jeudi   "),
+            Weekday::Fri => String::from("Vendredi"),
+            Weekday::Sat => String::from("Samedi  "),
+            Weekday::Sun => String::from("Dimanche"),
         }
     }
 }
@@ -47,9 +47,9 @@ impl std::fmt::Display for Time {
             }
             Type::Total => {
                 if self.hour == 0 {
-                    return write!(f, "Le {} {} : {}m", self.get_day(), self.date.format("%d-%m-%Y"), self.min);
+                    return write!(f, "{} {} : {}m", self.get_day(), self.date.format("%d-%m-%Y"), self.min);
                 }
-                return write!(f, "Le {} {} : {}h{}", self.get_day(), self.date.format("%d-%m-%Y"), self.hour, self.min);
+                return write!(f, "{} {} : {}h{}", self.get_day(), self.date.format("%d-%m-%Y"), self.hour, self.min);
             }
         }
     }
@@ -66,7 +66,7 @@ pub fn gui() -> Result<()>{
     }
 
     println!("");
-    let date = Utc::now().date_naive();
+    let date = Utc::now().date_naive() - Duration::days(0);
     let values = get_time_apps(&conn, date)?;
     println!("\tTemps des applications pour le {} : ", date.format("%d-%m-%Y"));
     for v in values {
@@ -110,8 +110,8 @@ fn get_time_apps(conn: &Connection, date: NaiveDate) -> Result<Vec<Time>> {
     let mut stmt = conn.prepare("SELECT * FROM time WHERE date = ?1")?;
     let mut rows = stmt.query_map(params![date.to_string()], |row| {
         let mut values: Vec<Time> = Vec::new();
-        for i in 2..column_names.len() {
-            values.push(Time::new(Type::App, column_names[i].clone(), date, row.get::<_, i32>(i)?))
+        for i in 1..column_names.len() {
+            values.push(Time::new(Type::App, column_names[i].clone(), date, row.get::<_, i32>(i+1)?))
         }
         Ok(values)
     })?;
@@ -124,7 +124,7 @@ fn get_time_apps(conn: &Connection, date: NaiveDate) -> Result<Vec<Time>> {
             }
         }
         _ => {
-            for n in 2..column_names.len() {
+            for n in 1..column_names.len() {
                 values.push(Time::new(Type::App, column_names[n].clone(), date, 0));
             }
         }
