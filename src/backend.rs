@@ -23,26 +23,33 @@ pub fn connect_database() -> Result<Connection> {
     }
 
     let conn = Connection::open(path)?;
-    //let conn = Connection::open("time_app.db")?; // pour débugger le backend
     conn.execute(
         "CREATE TABLE IF NOT EXISTS time (
             date DATE PRIMARY KEY,
-            main INTEGER DEFAULT 0,
-            alacritty INTEGER DEFAULT 0,
-            nvim INTEGER DEFAULT 0,
-            librewolf INTEGER DEFAULT 0,
-            freetube INTEGER DEFAULT 0,
-            [signal-desktop] INTEGER DEFAULT 0,
-            discord INTEGER DEFAULT 0,
-            netflix INTEGER DEFAULT 0,
-            xournalpp INTEGER DEFAULT 0,
-            spotube INTEGER DEFAULT 0,
-            nautilus INTEGER DEFAULT 0,
-            [gnome-calculator] INTEGER DEFAULT 0,
-            evince INTEGER DEFAULT 0
+            main INTEGER DEFAULT 0
         )",
         (),
     )?;
+    //let conn = Connection::open("time_app.db")?; // pour débugger le backend
+    //conn.execute(
+        //"CREATE TABLE IF NOT EXISTS time (
+            //date DATE PRIMARY KEY,
+            //main INTEGER DEFAULT 0,
+            //alacritty INTEGER DEFAULT 0,
+            //nvim INTEGER DEFAULT 0,
+            //librewolf INTEGER DEFAULT 0,
+            //freetube INTEGER DEFAULT 0,
+            //[signal-desktop] INTEGER DEFAULT 0,
+            //discord INTEGER DEFAULT 0,
+            //netflix INTEGER DEFAULT 0,
+            //xournalpp INTEGER DEFAULT 0,
+            //spotube INTEGER DEFAULT 0,
+            //nautilus INTEGER DEFAULT 0,
+            //[gnome-calculator] INTEGER DEFAULT 0,
+            //evince INTEGER DEFAULT 0
+        //)",
+        //(),
+    //)?;
 
     Ok(conn)
 }
