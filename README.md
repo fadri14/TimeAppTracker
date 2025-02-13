@@ -10,7 +10,7 @@ wget https://github.com/fadri14/TimeTracker/archive/refs/heads/main.zip
 unzip main.zip
 rm -fr main.zip
 cd TimeTracker-main
-sudo install.sh
+sudo ./install.sh
 rm -fr TimeTracker-main
 ```
 
