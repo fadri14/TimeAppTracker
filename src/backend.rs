@@ -11,8 +11,8 @@ pub fn update() -> Result<()> {
 }
 
 pub fn connect_database() -> Result<Connection> {
-    // Si la variable HOME est bien définie alors on stocke la base de données dans le dossier personnelle
-    // Sinon, elle stocké dans le répertoire courant
+    // If the HOME variable is well defined then we store the database in the personal folder.
+    // Otherwise, it stored in the current directory
     let mut path = String::new();
     match env::var("HOME") {
         Ok(val) if val.contains("/home") => {
@@ -30,7 +30,7 @@ pub fn connect_database() -> Result<Connection> {
         )",
         (),
     )?;
-    //let conn = Connection::open("time_app.db")?; // pour débugger le backend
+    // To directly create the table with our needs
     //conn.execute(
         //"CREATE TABLE IF NOT EXISTS time (
             //date DATE PRIMARY KEY,
@@ -59,13 +59,10 @@ fn increment_time(conn: &Connection) -> Result<()> {
     let mut values = get_values(&conn)?;
 
     if column_names.len() != values.len() {
-        panic!("Le nombre de colonnes et de données ne sont pas les même");
+        panic!("The number of columns and data are not the same.");
     }
 
-    conn.execute(
-        "DELETE FROM time WHERE date = CURRENT_DATE",
-        (),
-    )?;
+    conn.execute("DELETE FROM time WHERE date = CURRENT_DATE", (),)?;
 
     update_values(&column_names, &mut values);
 
@@ -76,11 +73,8 @@ fn increment_time(conn: &Connection) -> Result<()> {
 }
 
 fn delete_old_data(conn: &Connection) -> Result<()> {
-    // Supprimer les lignes où la date est plus ancienne que 28 jours
-    conn.execute(
-        "DELETE FROM time WHERE JULIANDAY(DATE()) - JULIANDAY(date) > 28",
-        (),
-    )?;
+    // Delete rows where the date is older than 28 days
+    conn.execute( "DELETE FROM time WHERE JULIANDAY(DATE()) - JULIANDAY(date) > 28", (),)?;
 
     Ok(())
 }
@@ -88,16 +82,12 @@ fn delete_old_data(conn: &Connection) -> Result<()> {
 pub fn get_column_name(conn: &Connection) -> Result<Vec<String>> {
     let mut stmt = conn.prepare("PRAGMA table_info(time)")?;
 
-    // Exécuter la requête et récupérer les résultats
     let column_info_iter = stmt.query_map([], |row| {
-        // La colonne 'name' contient le nom de la colonne
         row.get::<_, String>(1)
     })?;
 
-    // Créer un vecteur pour stocker les noms des colonnes
     let mut column_names = Vec::new();
 
-    // Parcourir les résultats et remplir le vecteur
     for column_name in column_info_iter {
         column_names.push("[".to_string() + &column_name? + "]");
     }
@@ -111,7 +101,6 @@ fn get_values(conn: &Connection) -> Result<Vec<i32>> {
 
     let column_count = stmt.column_count();
 
-    // Exécuter la requête et itérer sur les résultats
     let mut rows = stmt.query_map([], |row| {
         let mut values: Vec<i32> = Vec::new();
 
@@ -174,7 +163,7 @@ fn app_running(name: &String) -> bool {
         .arg("-x")
         .arg(name)
         .output()
-        .expect("Échec de l'exécution de la commande pgrep");
+        .expect("Failed to execute pgrep command");
 
     !output.stdout.is_empty()
 }

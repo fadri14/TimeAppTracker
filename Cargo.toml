@@ -1,8 +1,12 @@
 [package]
-name = "timetracker"
+name = "time_app_tracker"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+description = "Count the time you spend on the pc and the desired applications"
+repository = "https://github.com/fadri14/TimeTracker"
+readme = "README.md"
+keywords = ["time"]
 
 [dependencies]
 rusqlite = "0.29.0"
