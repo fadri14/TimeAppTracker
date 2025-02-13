@@ -23,7 +23,7 @@ Write the line below in the file.
 time_app_tracker
 ```
 
-### Exemple of output :
+### Sample output :
 ```
 	PC time:
 Thu 13-02-2025 : 5h12
