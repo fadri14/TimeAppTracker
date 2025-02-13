@@ -1,8 +1,0 @@
-[Unit]
-Description=Appelle le service pour maj des données
-
-[Timer]
-OnCalendar=*:0/1
-
-[Install]
-WantedBy=timers.target
