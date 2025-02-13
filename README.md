@@ -9,6 +9,12 @@ Installer les outils de rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
+Il faut recharger la configuration du terminal
+```
+# Pour bash
+source .bashrc
+```
+
 ## Installation
 ```
 wget https://github.com/fadri14/TimeTracker/archive/refs/heads/main.zip
