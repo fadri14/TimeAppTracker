@@ -8,8 +8,12 @@ This program allows to save the time spent on the pc and the desired application
 - rust (install: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
 
 ## Installation
+Installation of the application.
 ```
-cargo install
+cargo install time_app_tracker
+```
+Setting the timer.
+```
 crontab -e
 ```
 
