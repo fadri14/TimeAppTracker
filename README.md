@@ -16,7 +16,7 @@ Setting the timer.
 ```
 bash -c 'TEMP_CRON_FILE=$(mktemp)
 crontab -l > "$TEMP_CRON_FILE"
-echo "* * * * * $HOME/.cargo/bin/time_app_tracker update" >> "$TEMP_CRON_FILE"
+echo "* * * * * $HOME/.cargo/bin/time_app_tracker --update" >> "$TEMP_CRON_FILE"
 crontab "$TEMP_CRON_FILE"
 rm "$TEMP_CRON_FILE"'
 ```
@@ -74,8 +74,6 @@ evince : 10m
 ```
 
 ## Roadmap
-- Add statistics
-- Add feature to pause timer
 - Make data visualization more modular
 - Add the possibility to notify when an application has exceeded a certain time
 - Add support for flatpaks

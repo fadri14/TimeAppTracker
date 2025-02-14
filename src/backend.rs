@@ -2,15 +2,22 @@ use std::process::Command;
 use std::env;
 use rusqlite::{Connection, Result};
 
+pub enum State {
+    Get,
+    Change,
+}
+
 pub fn update() -> Result<()> {
-    let conn = connect_database()?;
-    delete_old_data(&conn)?;
-    increment_time(&conn)?;
+    if state(State::Get)? {
+        let conn = connect_database()?;
+        delete_old_data(&conn)?;
+        increment_time(&conn)?;
+    }
 
     Ok(())
 }
 
-pub fn connect_database() -> Result<Connection> {
+fn get_path_bdd() -> String {
     // If the HOME variable is well defined then we store the database in the personal folder.
     // Otherwise, it stored in the current directory
     let mut path = String::new();
@@ -22,8 +29,13 @@ pub fn connect_database() -> Result<Connection> {
         _ => path.push_str(".time_app.db"),
     }
 
-    //let conn = Connection::open("time_app.db")?;
-    let conn = Connection::open(path)?;
+    path
+    //String::from("time_app.db")
+}
+
+pub fn connect_database() -> Result<Connection> {
+
+    let conn = Connection::open(get_path_bdd())?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS time (
             date DATE PRIMARY KEY,
@@ -209,3 +221,38 @@ fn contain_names(conn: &Connection, name: &String) -> Result<bool> {
 
     Ok(false)
 }
+
+pub fn state(switch: State) -> Result<bool> {
+    let conn = Connection::open(get_path_bdd())?;
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS state (
+            is_running BINARY PRIMARY KEY DEFAULT 1
+        )",
+        (),
+    )?;
+
+    let mut stmt = conn.prepare("SELECT * FROM state")?;
+
+    let mut rows = stmt.query_map([], |row| {
+        Ok(row.get(0))
+    })?;
+
+    let mut state = true;
+
+    if let Some(Ok(is_running)) = rows.next() {
+        if is_running == Ok(0) {
+            state = false;
+        }
+    }
+
+    if let State::Change = switch {
+        state = !state;
+    }
+
+    conn.execute("DELETE FROM state", [])?;
+    let query = format!("INSERT INTO state (is_running) VALUES ({})", state);
+    conn.execute(&query, [])?;
+
+    Ok(state)
+}
+
