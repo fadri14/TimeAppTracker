@@ -21,12 +21,33 @@ crontab "$TEMP_CRON_FILE"
 rm "$TEMP_CRON_FILE"'
 ```
 
-## Use
+## Usage
+
+### Help
 ```
-time_app_tracker
+time_app_tracker --help
 ```
 
-### Example output :
+#### Output of help
+```
+Usage: time_app_tracker [-i] [-u] [-a <add>] [-d <del>]
+
+CLI to track usage times
+
+Options:
+  -i, --int         launch the interface
+  -u, --update      launch update
+  -a, --add         add a application
+  -d, --del         delete a application
+  --help, help      display usage information
+```
+
+### Example
+```
+time_app_tracker --int
+```
+
+#### Output
 ```
 	PC time:
 Thu 13-02-2025 : 5h12
@@ -53,5 +74,9 @@ evince : 10m
 ```
 
 ## Roadmap
-- Add and remove applications in the following application list
+- Add statistics
+- Add feature to pause timer
+- Possibility to request a specific date
+- Add the possibility to notify when an application has exceeded a certain time
+- Add support for flatpaks
 - A TUI

@@ -43,7 +43,7 @@ impl std::fmt::Display for Time {
     }
 }
 
-pub fn gui() -> Result<()>{
+pub fn interface() -> Result<()>{
     let conn = backend::connect_database()?;
 
     let values = get_time_main(&conn, 0)?;

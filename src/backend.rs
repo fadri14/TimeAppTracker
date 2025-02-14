@@ -22,6 +22,7 @@ pub fn connect_database() -> Result<Connection> {
         _ => path.push_str(".time_app.db"),
     }
 
+    //let conn = Connection::open("time_app.db")?;
     let conn = Connection::open(path)?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS time (
@@ -165,5 +166,34 @@ fn app_running(name: &String) -> bool {
         .expect("Failed to execute pgrep command");
 
     !output.stdout.is_empty()
+}
+
+pub fn add_app(name: String) -> Result<()> {
+    let conn = connect_database()?;
+    let query = format!("ALTER TABLE time ADD COLUMN [{}] INTEGER DEFAULT 0", &name);
+    conn.execute(&query, [])?;
+    Ok(())
+}
+
+pub fn del_app(name: String) -> Result<()> {
+    if name == "date" || name == "main" {
+        panic!("You cannot delete the {} column", name);
+    }
+
+    let conn = connect_database()?;
+
+    let names = get_column_name(&conn)?;
+
+    for n in names {
+        let start = 1;
+        let end = n.len()-1;
+        if name == &n[start..end] {
+            let query = format!("ALTER TABLE time DROP [{}]", &name);
+            conn.execute(&query, [])?;
+            return Ok(());
+        }
+    }
+
+    panic!("The application you want to delete does not exist");
 }
 
