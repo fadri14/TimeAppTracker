@@ -25,21 +25,30 @@ struct Params {
 
 fn main() {
     let param: Params = argh::from_env();
+    let mut flag = true;
 
     if let Some(name) = param.add {
         backend::add_app(name).expect("Unable to update data in database");
+        flag = false;
     }
 
     if let Some(name) = param.del {
         backend::del_app(name).expect("Unable to update data in database");
+        flag = false;
     }
 
     if param.update {
         backend::update().expect("Unable to update data in database");
+        flag = false;
     }
 
     if param.int {
         frontend::interface().expect("Unable to retrieve data from database");
+        flag = false;
+    }
+
+    if flag {
+        println!("run `time_app_tracker --help` for help");
     }
 }
 
