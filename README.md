@@ -42,7 +42,7 @@ Options:
   --help, help      display usage information
 ```
 
-### Example
+### Example of interface
 ```
 time_app_tracker --int
 ```
@@ -76,7 +76,8 @@ evince : 10m
 ## Roadmap
 - Add statistics
 - Add feature to pause timer
-- Possibility to request a specific date
+- Make data visualization more modular
 - Add the possibility to notify when an application has exceeded a certain time
 - Add support for flatpaks
 - A TUI
+

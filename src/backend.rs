@@ -22,8 +22,8 @@ pub fn connect_database() -> Result<Connection> {
         _ => path.push_str(".time_app.db"),
     }
 
-    let conn = Connection::open("time_app.db")?;
-    //let conn = Connection::open(path)?;
+    //let conn = Connection::open("time_app.db")?;
+    let conn = Connection::open(path)?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS time (
             date DATE PRIMARY KEY,
