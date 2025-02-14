@@ -170,9 +170,14 @@ fn app_running(name: &String) -> bool {
 
 pub fn add_app(name: String) -> Result<()> {
     let conn = connect_database()?;
-    let query = format!("ALTER TABLE time ADD COLUMN [{}] INTEGER DEFAULT 0", &name);
-    conn.execute(&query, [])?;
-    Ok(())
+
+    if name != "date" && !contain_names(&conn, &name)? {
+        let query = format!("ALTER TABLE time ADD COLUMN [{}] INTEGER DEFAULT 0", &name);
+        conn.execute(&query, [])?;
+        return Ok(());
+    }
+
+    panic!("the app you want to add is already present");
 }
 
 pub fn del_app(name: String) -> Result<()> {
@@ -182,18 +187,25 @@ pub fn del_app(name: String) -> Result<()> {
 
     let conn = connect_database()?;
 
-    let names = get_column_name(&conn)?;
-
-    for n in names {
-        let start = 1;
-        let end = n.len()-1;
-        if name == &n[start..end] {
-            let query = format!("ALTER TABLE time DROP [{}]", &name);
-            conn.execute(&query, [])?;
-            return Ok(());
-        }
+    if contain_names(&conn, &name)? {
+        let query = format!("ALTER TABLE time DROP [{}]", &name);
+        conn.execute(&query, [])?;
+        return Ok(());
     }
 
     panic!("The application you want to delete does not exist");
 }
 
+fn contain_names(conn: &Connection, name: &String) -> Result<bool> {
+    let column_names = get_column_name(&conn)?;
+
+    for n in column_names {
+        let start = 1;
+        let end = n.len()-1;
+        if name == &n[start..end] {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
