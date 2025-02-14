@@ -115,7 +115,7 @@ pub fn interface() -> Result<()>{
     let date = Utc::now().date_naive() - Duration::days(0);
     let values = get_time_apps(&conn, date)?;
     if values.len() > 0 {
-        println!("\tApplication time for {} : ", date.format("%d-%m-%Y"));
+        println!("\tApplication time for {} : ", date);
         for v in values {
             println!("{}", v);
         }
