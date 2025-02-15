@@ -1,9 +1,8 @@
 use crate::backend;
 use rusqlite::{params, Connection, Result};
-use chrono::{Duration, Utc, NaiveDate, Datelike};
+use chrono::{Duration, NaiveDate, Datelike};
 
 const NUMBER_MINUTES_IN_HOUR: u16 = 60;
-const NUMBER_DAYS_DESIRED: u16 = 7;
 
 enum Type {
     Main,
@@ -102,10 +101,10 @@ impl std::fmt::Display for Stat {
     }
 }
 
-pub fn interface() -> Result<()>{
+pub fn print_main(date: NaiveDate, number_days: u16) -> Result<()> {
     let conn = backend::connect_database()?;
 
-    let values = get_time_main(&conn, 0)?;
+    let values = get_time_main(&conn, date, number_days)?;
 
     println!("\tPC time : ");
     for v in &values {
@@ -114,8 +113,12 @@ pub fn interface() -> Result<()>{
 
     println!("\n\tStats of PC time :\n{}", Stat::new(values));
 
-    println!("");
-    let date = Utc::now().date_naive() - Duration::days(0);
+    Ok(())
+}
+
+pub fn print_apps(date: NaiveDate) -> Result<()> {
+    let conn = backend::connect_database()?;
+
     let values = get_time_apps(&conn, date)?;
     if values.len() > 0 {
         println!("\tApplication time for {} : ", date);
@@ -127,14 +130,10 @@ pub fn interface() -> Result<()>{
     Ok(())
 }
 
-fn get_time_main(conn: &Connection, nbr_week: u16) -> Result<Vec<TimeApp>> {
-    let nbr_week = if nbr_week > 3 { 0 } else { nbr_week };
-
-    let week = Utc::now().date_naive() - Duration::days((NUMBER_DAYS_DESIRED * nbr_week).into());
-
-    let query = format!("SELECT date, main FROM time WHERE date <= ?1 and date >= DATE(?1, '-{} days') ORDER BY date DESC", NUMBER_DAYS_DESIRED);
+fn get_time_main(conn: &Connection, date: NaiveDate, number_days: u16) -> Result<Vec<TimeApp>> {
+    let query = format!("SELECT date, main FROM time WHERE date <= ?1 and date >= DATE(?1, '-{} days') ORDER BY date DESC", number_days);
     let mut stmt = conn.prepare(&query)?;
-    let rows = stmt.query_map(params![week.to_string()], |row| {
+    let rows = stmt.query_map(params![date.to_string()], |row| {
         let date = NaiveDate::parse_from_str(&row.get::<_, String>(0)?, "%Y-%m-%d").expect("Unable to retrieve a date");
         Ok(TimeApp::new(Type::Main, "main".to_string(), date, row.get::<_, u16>(1)?))
     })?;
@@ -146,10 +145,10 @@ fn get_time_main(conn: &Connection, nbr_week: u16) -> Result<Vec<TimeApp>> {
         }
     }
 
-    for i in 0..NUMBER_DAYS_DESIRED {
-        let date = week - Duration::days(i as i64);
-        if i == values.len() as u16 || values[i as usize].date != date {
-            values.insert(i as usize, TimeApp::new(Type::Main, "main".to_string(), date, 0));
+    for i in 0..number_days {
+        let deadline = date - Duration::days(i as i64);
+        if i == values.len() as u16 || values[i as usize].date != deadline {
+            values.insert(i as usize, TimeApp::new(Type::Main, "main".to_string(), deadline, 0));
         }
     }
 

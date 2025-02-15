@@ -30,52 +30,57 @@ time_app_tracker --help
 
 #### Output of help
 ```
-Usage: time_app_tracker [-i] [-u] [-a <add>] [-d <del>]
+Usage: time_app_tracker [-p] [-s] [-u] [-a <add>] [-d <del>] [--main] [--apps] [--date <date>] [-n <number>]
 
 CLI to track usage times
 
 Options:
-  -i, --int         launch the interface
+  -p, --pause       pause the timer
+  -s, --status      get the status of timer
   -u, --update      launch update
   -a, --add         add a application
   -d, --del         delete a application
-  --help, help      display usage information
+  --main            retrieve data on main time
+  --apps            retrieve application data
+  --date            select the date of the retrieved data, foramt : YYYY-mm-dd
+  -n, --number      select the number of day of the retrieved data
+  -h, --help, help  display usage information
 ```
 
 ### Example of interface
 ```
-time_app_tracker --int
+time_app_tracker --main --apps --date 2025-02-15 -n 3
 ```
 
 #### Output
 ```
-	PC time:
-Thu 13-02-2025 : 5h12
-Wed 12-02-2025 : 16m
-Tue 11-02-2025 : 3h45
-Mon 10-02-2025 : 0m
-Sun 09-02-2025 : 0m
-Sat 08-02-2025 : 0m
-Fri 07-02-2025 : 0m
+	PC time :
+Sat 2025-02-15 : 3h26
+Fri 2025-02-14 : 4h33
+Thu 2025-02-13 : 4h03
 
-	Application time for 13-02-2025 :
-alacritty : 4h37
-nvim : 1h29
-librewolf : 2h40
-freetube : 26m
+	Stats of PC time :
+Max : 4h33
+Min : 3h26
+Mean: 3h00
+
+	Application time for 2025-02-15 :
+alacritty : 2h52
+nvim : 2h14
+librewolf : 1h25
+freetube : 45m
 signal-desktop : 0m
 discord : 0m
 netflix : 0m
-xournalpp : 1h40
-spotube : 50m
-nautilus : 1m
+xournalpp : 0m
+spotube : 54m
+nautilus : 0m
 gnome-calculator : 0m
-evince : 10m
+evince : 58m
 ```
 
 ## Roadmap
-- Make data visualization more modular
-- Add the possibility to notify when an application has exceeded a certain time
 - Add support for flatpaks
+- Add the possibility to notify when an application has exceeded a certain time
 - A TUI
 
