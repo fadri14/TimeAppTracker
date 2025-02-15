@@ -2,6 +2,8 @@ use std::process::Command;
 use std::env;
 use rusqlite::{Connection, Result};
 
+const NUMBER_DAYS_SAVED: u16 = 28;
+
 pub enum State {
     Get,
     Change,
@@ -34,7 +36,6 @@ fn get_path_bdd() -> String {
 }
 
 pub fn connect_database() -> Result<Connection> {
-
     let conn = Connection::open(get_path_bdd())?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS time (
@@ -43,26 +44,6 @@ pub fn connect_database() -> Result<Connection> {
         )",
         (),
     )?;
-    // To directly create the table with our needs
-    //conn.execute(
-        //"CREATE TABLE IF NOT EXISTS time (
-            //date DATE PRIMARY KEY,
-            //main INTEGER DEFAULT 0,
-            //alacritty INTEGER DEFAULT 0,
-            //nvim INTEGER DEFAULT 0,
-            //librewolf INTEGER DEFAULT 0,
-            //freetube INTEGER DEFAULT 0,
-            //[signal-desktop] INTEGER DEFAULT 0,
-            //discord INTEGER DEFAULT 0,
-            //netflix INTEGER DEFAULT 0,
-            //xournalpp INTEGER DEFAULT 0,
-            //spotube INTEGER DEFAULT 0,
-            //evince INTEGER DEFAULT 0,
-            //nautilus INTEGER DEFAULT 0,
-            //[gnome-calculator] INTEGER DEFAULT 0
-        //)",
-        //(),
-    //)?;
 
     Ok(conn)
 }
@@ -86,7 +67,8 @@ fn increment_time(conn: &Connection) -> Result<()> {
 }
 
 fn delete_old_data(conn: &Connection) -> Result<()> {
-    conn.execute( "DELETE FROM time WHERE JULIANDAY(DATE()) - JULIANDAY(date) > 28", (),)?;
+    let query = format!("DELETE FROM time WHERE JULIANDAY(DATE()) - JULIANDAY(date) > {}", NUMBER_DAYS_SAVED);
+    conn.execute(&query, [])?;
 
     Ok(())
 }
@@ -108,13 +90,13 @@ pub fn get_column_name(conn: &Connection) -> Result<Vec<String>> {
     Ok(column_names)
 }
 
-fn get_values(conn: &Connection) -> Result<Vec<i32>> {
+fn get_values(conn: &Connection) -> Result<Vec<u16>> {
     let mut stmt = conn.prepare("SELECT * FROM time WHERE date = CURRENT_DATE")?;
 
     let column_count = stmt.column_count();
 
     let mut rows = stmt.query_map([], |row| {
-        let mut values: Vec<i32> = Vec::new();
+        let mut values: Vec<u16> = Vec::new();
 
         for i in 1..column_count {
             values.push(row.get(i)?);
@@ -130,7 +112,7 @@ fn get_values(conn: &Connection) -> Result<Vec<i32>> {
     Ok(vec![0 ; column_count-1])
 }
 
-fn update_values(names: &Vec<String>, values: &mut Vec<i32>) {
+fn update_values(names: &Vec<String>, values: &mut Vec<u16>) {
     let mut index = 0;
     while index < names.len() {
         if app_running(&names[index]) {
@@ -141,7 +123,7 @@ fn update_values(names: &Vec<String>, values: &mut Vec<i32>) {
     }
 }
 
-fn format_query(names: Vec<String>, values: Vec<i32>) -> String {
+fn format_query(names: Vec<String>, values: Vec<u16>) -> String {
     let mut names_query = String::new();
     let mut values_query = String::new();
 
@@ -163,9 +145,7 @@ fn format_query(names: Vec<String>, values: Vec<i32>) -> String {
 }
 
 fn app_running(name: &String) -> bool {
-    let start = 1;
-    let end = name.len()-1;
-    let name = &name[start..end];
+    let name = &name[1..name.len()-1];
 
     if name == "main" {
         return true;
@@ -212,9 +192,7 @@ fn contain_names(conn: &Connection, name: &String) -> Result<bool> {
     let column_names = get_column_name(&conn)?;
 
     for n in column_names {
-        let start = 1;
-        let end = n.len()-1;
-        if name == &n[start..end] {
+        if name == &n[1..n.len()-1] {
             return Ok(true);
         }
     }
