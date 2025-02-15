@@ -6,6 +6,14 @@ mod backend;
 #[derive(FromArgs)]
 /// CLI to track usage times
 struct Params {
+    /// pause the timer
+    #[argh(switch, short = 'p')]
+    pause: bool,
+
+    /// get the status of timer
+    #[argh(switch, short = 's')]
+    status: bool,
+
     /// launch the interface
     #[argh(switch, short = 'i')]
     int: bool,
@@ -21,38 +29,45 @@ struct Params {
     /// delete a application
     #[argh(option, short = 'd')]
     del: Option<String>,
-
-    /// pause the timer
-    #[argh(switch, short = 'p')]
-    pause: bool,
 }
 
 fn main() {
     let param: Params = argh::from_env();
     let mut flag = true;
 
+    if param.pause {
+        backend::state(backend::State::Change).expect("pause : Unable to work with database");
+        flag = false;
+    }
+
+    if param.status {
+        if backend::state(backend::State::Get).expect("status : Unable to work with database") {
+            println!("The timer is on");
+        }
+        else {
+            println!("The timer is off");
+        }
+
+        flag = false;
+    }
+
     if let Some(name) = param.add {
-        backend::add_app(name).expect("Unable to work with database");
+        backend::add_app(name).expect("add : Unable to work with database");
         flag = false;
     }
 
     if let Some(name) = param.del {
-        backend::del_app(name).expect("Unable to work with database");
+        backend::del_app(name).expect("del : Unable to work with database");
         flag = false;
     }
 
     if param.update {
-        backend::update().expect("Unable to work with database");
+        backend::update().expect("update : Unable to work with database");
         flag = false;
     }
 
     if param.int {
-        frontend::interface().expect("Unable to work with database");
-        flag = false;
-    }
-
-    if param.pause {
-        backend::state(backend::State::Change).expect("Unable to work with database");
+        frontend::interface().expect("int : Unable to work with database");
         flag = false;
     }
 
