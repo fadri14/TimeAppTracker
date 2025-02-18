@@ -2,15 +2,21 @@ use std::process::Command;
 use std::env;
 use rusqlite::{Connection, Result};
 
-const NUMBER_DAYS_SAVED: u16 = 28;
+const DEFAULT_NUMBER_DAYS_SAVED: u16 = 28;
 
-pub enum State {
-    Get,
-    Change,
+struct Settings {
+    state: String,
+    storage_size: u16,
+}
+
+impl std::fmt::Display for Settings {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        return write!(f, "State : {}\nStorage size : {}", self.state, self.storage_size);
+    }
 }
 
 pub fn update() -> Result<()> {
-    if state(State::Get)? {
+    if get_settings()?.state == String::from("on") {
         let conn = connect_database()?;
         delete_old_data(&conn)?;
         increment_time(&conn)?;
@@ -26,13 +32,13 @@ fn get_path_bdd() -> String {
     match env::var("HOME") {
         Ok(val) if val.contains("/home") => {
             path.push_str(&val);
-            path.push_str("/.time_app.db")
+            path.push_str("/.time_app_tracker.db")
         }
-        _ => path.push_str(".time_app.db"),
+        _ => path.push_str(".time_app_tracker.db"),
     }
 
-    path
-    //String::from("time_app.db")
+    //path
+    String::from("time_app_tracker.db")
 }
 
 pub fn connect_database() -> Result<Connection> {
@@ -67,7 +73,20 @@ fn increment_time(conn: &Connection) -> Result<()> {
 }
 
 fn delete_old_data(conn: &Connection) -> Result<()> {
-    let query = format!("DELETE FROM time WHERE JULIANDAY(DATE()) - JULIANDAY(date) > {}", NUMBER_DAYS_SAVED);
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS settings (
+            attribute TEXT PRIMARY KEY,
+            value TEXT
+        )",
+        (),
+    )?;
+
+    let mut storage_size = DEFAULT_NUMBER_DAYS_SAVED;
+    if let Some(value) = get_attribute(&conn, String::from("storage_size"))? {
+        storage_size = value.parse::<u16>().unwrap_or(DEFAULT_NUMBER_DAYS_SAVED);
+    }
+
+    let query = format!("DELETE FROM time WHERE JULIANDAY(DATE()) - JULIANDAY(date) > {}", storage_size);
     conn.execute(&query, [])?;
 
     Ok(())
@@ -200,37 +219,113 @@ fn contain_names(conn: &Connection, name: &String) -> Result<bool> {
     Ok(false)
 }
 
-pub fn state(switch: State) -> Result<bool> {
+fn get_settings() -> Result<Settings> {
     let conn = Connection::open(get_path_bdd())?;
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS state (
-            is_running BINARY PRIMARY KEY DEFAULT 1
+        "CREATE TABLE IF NOT EXISTS settings (
+            attribute TEXT PRIMARY KEY,
+            value TEXT
         )",
         (),
     )?;
 
-    let mut stmt = conn.prepare("SELECT * FROM state")?;
+    let mut state = String::from("on");
+    if let Some(value) = get_attribute(&conn, String::from("state"))? {
+        state = value;
+    }
 
-    let mut rows = stmt.query_map([], |row| {
+    let mut storage_size = DEFAULT_NUMBER_DAYS_SAVED;
+    if let Some(value) = get_attribute(&conn, String::from("storage_size"))? {
+        storage_size = value.parse::<u16>().unwrap_or(DEFAULT_NUMBER_DAYS_SAVED);
+    }
+
+    Ok(Settings {
+        state : state,
+        storage_size : storage_size
+    })
+}
+
+pub fn display_settings() -> Result<()> {
+    println!("{}", get_settings()?);
+    Ok(())
+}
+
+fn get_attribute(conn: &Connection, name: String) -> Result<Option<String>> {
+    let mut stmt = conn.prepare("SELECT value FROM settings WHERE attribute = ?1")?;
+
+    let mut rows = stmt.query_map([&name], |row| {
         Ok(row.get(0))
     })?;
 
-    let mut state = true;
-
-    if let Some(Ok(is_running)) = rows.next() {
-        if is_running == Ok(0) {
-            state = false;
-        }
+    if let Some(Ok(Ok(value))) = rows.next() {
+        return Ok(Some(value))
     }
 
-    if let State::Change = switch {
-        state = !state;
-    }
-
-    conn.execute("DELETE FROM state", [])?;
-    let query = format!("INSERT INTO state (is_running) VALUES ({})", state);
-    conn.execute(&query, [])?;
-
-    Ok(state)
+    Ok(None)
 }
+
+pub fn change_settings(name: String, value: String) -> Result<()> {
+    let conn = Connection::open(get_path_bdd())?;
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS settings (
+            attribute TEXT PRIMARY KEY,
+            value TEXT
+        )",
+        (),
+    )?;
+
+    set_attribute(&conn, name, value)?;
+    Ok(())
+}
+
+pub fn set_attribute(conn: &Connection, name: String, value: String) -> Result<()> {
+    conn.execute("DELETE FROM settings WHERE attribute = ?1", ((&name),),)?;
+    conn.execute("INSERT INTO settings (attribute, value) VALUES (?1, ?2)", (&name, &value),)?;
+    Ok(())
+}
+
+pub fn switch_state() -> Result<()> {
+    let conn = Connection::open(get_path_bdd())?;
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS settings (
+            attribute TEXT PRIMARY KEY,
+            value TEXT
+        )",
+        (),
+    )?;
+
+    match get_attribute(&conn, String::from("state"))? {
+        Some(value) if value == String::from("on") => set_attribute(&conn, String::from("state"), String::from("off"))?,
+        _ => set_attribute(&conn, String::from("state"), String::from("on"))?
+    }
+
+    Ok(())
+}
+
+//pub fn set_notif(name: String, time: DateTime) -> Result<()> {
+    // Se connecter à la bdd et créer la table
+    // Surprimmer les lignes où il y a name pour être sûr qu'il y en a qu'un seul
+    // insérer une nouvelle ligne avec name et time
+    //
+    // exemple :
+    // notify-rust
+// use notify_rust::Notification;
+// Notification::new()
+    // .summary("Firefox News")
+    // .body("This will almost look like a real firefox notification.")
+    // .icon("firefox")
+    // .show()?;
+// 
+    // use notify_rust::{Notification, Hint};
+// Notification::new()
+    // .summary("Category:email")
+    // .body("This has nothing to do with emails.\nIt should not go away until you acknowledge it.")
+    // .icon("thunderbird")
+    // .appname("thunderbird")
+    // .hint(Hint::Category("email".to_owned()))
+    // .hint(Hint::Resident(true)) // this is not supported by all implementations
+    // .timeout(0) // this however is
+    // .show()?;
+//    Ok(())
+//}
 

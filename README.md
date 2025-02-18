@@ -6,6 +6,7 @@ This program allows to save the time spent on the pc and the desired application
 ## Prerequisite
 - cron (Verify that the service is installed and enabled)
 - rust (install: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
+- sqlite
 
 ## Installation
 Installation of the application.
@@ -84,3 +85,5 @@ evince : 58m
 - Add the possibility to notify when an application has exceeded a certain time
 - A TUI
 
+## Limitation
+As the timer works with the cron service that is activated every minute, there is a margin of error of one minute each time an application is used.
