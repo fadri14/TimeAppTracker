@@ -1,8 +1,9 @@
 use argh::FromArgs;
 use chrono::{Utc, NaiveDate};
 
-mod frontend;
-mod backend;
+mod database;
+
+use database::Database;
 
 const VERSION_NUMBER: &str = "v0.1.6";
 
@@ -67,6 +68,8 @@ fn main() {
     let param: Params = argh::from_env();
     let mut flag = true;
 
+    let database = Database::new().expect("Unable to work with database");
+
     if param.version {
         println!("current version : {}", VERSION_NUMBER);
         flag = false;
@@ -74,10 +77,10 @@ fn main() {
 
     if let Some(mode) = param.state {
         if mode == String::from("on") || mode == String::from("off") {
-            backend::change_settings(String::from("state"), mode).expect("state : Unable to work with database");
+            database.change_settings(String::from("state"), mode).expect("state : Unable to work with database");
         }
         else if mode == String::from("switch") {
-            backend::switch_state().expect("state : Unable to work with database");
+            database.switch_state().expect("state : Unable to work with database");
         }
         else {
             println!("Error : there are only three possible modes [on|off|switch]");
@@ -86,12 +89,12 @@ fn main() {
     }
 
     if let Some(number) = param.storage {
-        backend::change_settings(String::from("storage_size"), number.to_string()).expect("storage : Unable to work with database");
+        database.change_settings(String::from("storage_size"), number.to_string()).expect("storage : Unable to work with database");
         flag = false;
     }
 
     if param.settings {
-        backend::display_settings().expect("settings : Unable to work with database");
+        database.display_settings().expect("settings : Unable to work with database");
         flag = false;
     }
 
@@ -99,7 +102,7 @@ fn main() {
     //match (param.notif_app, param.notif_time) {
         //(Some(name), Some(time)) => {
         //et time = DateTime::parse_from_str(time, "%H:%M").expect("Wrong duration syntax. Used HH:MM");
-        //backend::set_notif(name, time).expect("notif_app : Unable to work with database");
+        //database.set_notif(name, time).expect("notif_app : Unable to work with database");
         //},
         //_ => println!("Error : you must use the arguments [--notif_app] and [--notif_time] at the same time"),
     //}
@@ -107,22 +110,22 @@ fn main() {
     //}
 
     if param.update {
-        backend::update().expect("update : Unable to work with database");
+        database.update().expect("update : Unable to work with database");
         flag = false;
     }
 
     if let Some(name) = param.add {
-        backend::add_app(name).expect("add : Unable to work with database");
+        database.add_app(name).expect("add : Unable to work with database");
         flag = false;
     }
 
     if let Some(name) = param.del {
-        backend::del_app(name).expect("del : Unable to work with database");
+        database.del_app(name).expect("del : Unable to work with database");
         flag = false;
     }
 
     if param.main {
-        frontend::print_main(param.date, param.number).expect("main : Unable to work with database");
+        database.print_main(param.date, param.number).expect("main : Unable to work with database");
         flag = false;
     }
 
@@ -131,7 +134,7 @@ fn main() {
     }
 
     if param.apps {
-        frontend::print_apps(param.date).expect("apps : Unable to work with database");
+        database.print_apps(param.date).expect("apps : Unable to work with database");
         flag = false;
     }
 
