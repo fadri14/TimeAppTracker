@@ -31,7 +31,7 @@ impl Database {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS time (
                 date DATE PRIMARY KEY,
-                main INTEGER DEFAULT 0
+                pc INTEGER DEFAULT 0
             )",
             (),
         )?;
@@ -136,7 +136,7 @@ impl Database {
     }
 
     pub fn del_app(&self, name: String) -> Result<()> {
-        if name == "date" || name == "main" {
+        if name == "date" || name == SCREENTIME {
             panic!("You cannot delete the {} column", name);
         }
 
@@ -212,39 +212,14 @@ impl Database {
         Ok(())
     }
 
-    fn get_time_main(&self, date: NaiveDate, number_days: u16) -> Result<Vec<TimeApp>> {
-        let query = format!("SELECT date, main FROM time WHERE date <= ?1 and date >= DATE(?1, '-{} days') ORDER BY date DESC", number_days);
-        let mut stmt = self.conn.prepare(&query)?;
-        let rows = stmt.query_map(params![date.to_string()], |row| {
-            let date = NaiveDate::parse_from_str(&row.get::<_, String>(0)?, "%Y-%m-%d").expect("Unable to retrieve a date");
-            Ok(TimeApp::new(Type::Main, "main".to_string(), date, row.get::<_, u16>(1)?))
-        })?;
-
-        let mut values: Vec<TimeApp> = Vec::new();
-        for row in rows {
-            if let Ok(time) = row {
-                values.push(time);
-            }
-        }
-
-        for i in 0..number_days {
-            let deadline = date - Duration::days(i as i64);
-            if i == values.len() as u16 || values[i as usize].date != deadline {
-                values.insert(i as usize, TimeApp::new(Type::Main, "main".to_string(), deadline, 0));
-            }
-        }
-
-        Ok(values)
-    }
-
-    fn get_time_apps(&self, date: NaiveDate) -> Result<Vec<TimeApp>> {
+    fn get_time_day(&self, date: NaiveDate) -> Result<Vec<TimeApp>> {
         let column_names = self.get_column_name()?;
 
         let mut stmt = self.conn.prepare("SELECT * FROM time WHERE date = ?1")?;
         let mut rows = stmt.query_map(params![date.to_string()], |row| {
             let mut values: Vec<TimeApp> = Vec::new();
-            for i in 1..column_names.len() {
-                values.push(TimeApp::new(Type::App, column_names[i].clone(), date, row.get::<_, u16>(i+1)?))
+            for i in 0..column_names.len() {
+                values.push(TimeApp::new(Type::Day, column_names[i].clone(), date, row.get::<_, u16>(i+1)?))
             }
             Ok(values)
         })?;
@@ -257,8 +232,8 @@ impl Database {
                 }
             }
             _ => {
-                for n in 1..column_names.len() {
-                    values.push(TimeApp::new(Type::App, column_names[n].clone(), date, 0));
+                for n in 0..column_names.len() {
+                    values.push(TimeApp::new(Type::Day, column_names[n].clone(), date, 0));
                 }
             }
         }
@@ -266,56 +241,96 @@ impl Database {
         Ok(values)
     }
 
-    pub fn print_main(&self, date: NaiveDate, number_days: u16) -> Result<()> {
-        let values = self.get_time_main(date, number_days)?;
+    fn get_time_app(&self, name: &String, date: NaiveDate, number_days: u16) -> Result<Vec<TimeApp>> {
+        let query = format!(
+            "SELECT date, [{}] FROM time WHERE date <= '{}' and date >= DATE('{}', '-{} days') ORDER BY date DESC",
+            name, date.to_string(), date.to_string(), number_days);
+        let mut stmt = self.conn.prepare(&query)?;
+        let rows = stmt.query_map([], |row| {
+            let date = NaiveDate::parse_from_str(&row.get::<_, String>(0)?, "%Y-%m-%d").expect("Unable to retrieve a date");
+            Ok(TimeApp::new(Type::App, SCREENTIME.to_string(), date, row.get::<_, u16>(1)?))
+        })?;
 
-        println!("\tPC time : ");
-        for v in &values {
+        let mut values: Vec<TimeApp> = Vec::new();
+        for row in rows {
+            if let Ok(time) = row {
+                values.push(time);
+            }
+        }
+
+        for i in 0..number_days {
+            let deadline = date - Duration::days(i as i64);
+            if i == values.len() as u16 || values[i as usize].date != deadline {
+                values.insert(i as usize, TimeApp::new(Type::App, SCREENTIME.to_string(), deadline, 0));
+            }
+        }
+
+        Ok(values)
+    }
+
+    pub fn print_day_data(&self, date: NaiveDate) -> Result<()> {
+        let values = self.get_time_day(date)?;
+        println!("\tApplication time for {} : ", date);
+        for v in values {
             println!("{}", v);
         }
 
-        println!("\n\tStats of PC time :\n{}", Stat::new(values));
+        println!("");
 
         Ok(())
     }
 
-    pub fn print_apps(&self, date: NaiveDate) -> Result<()> {
-        let values = self.get_time_apps(date)?;
-        if values.len() > 0 {
-            println!("\tApplication time for {} : ", date);
-            for v in values {
-                println!("{}", v);
+    pub fn print_app_data(&self, name: String, date: NaiveDate, number_days: u16) -> Result<()> {
+        let column_names = self.get_column_name()?;
+        let mut exist = false;
+        for n in column_names {
+            if name == &n[1..n.len()-1] {
+                exist = true;
+                break;
             }
         }
+        if !exist {
+            panic!("This application is not followed");
+        }
+
+        let values = self.get_time_app(&name, date, number_days)?;
+
+        println!("\tTime for {} : ", &name);
+        for v in &values {
+            println!("{}", v);
+        }
+
+        println!("\n\tStats of time for {} :\n{}", &name, Stat::new(values));
+        println!("");
 
         Ok(())
     }
 }
 
 //pub fn set_notif(name: String, time: DateTime) -> Result<()> {
-    // Se connecter à la bdd et créer la table
-    // Surprimmer les lignes où il y a name pour être sûr qu'il y en a qu'un seul
-    // insérer une nouvelle ligne avec name et time
-    //
-    // exemple :
-    // notify-rust
+// Se connecter à la bdd et créer la table
+// Surprimmer les lignes où il y a name pour être sûr qu'il y en a qu'un seul
+// insérer une nouvelle ligne avec name et time
+//
+// exemple :
+// notify-rust
 // use notify_rust::Notification;
 // Notification::new()
-    // .summary("Firefox News")
-    // .body("This will almost look like a real firefox notification.")
-    // .icon("firefox")
-    // .show()?;
+// .summary("Firefox News")
+// .body("This will almost look like a real firefox notification.")
+// .icon("firefox")
+// .show()?;
 // 
-    // use notify_rust::{Notification, Hint};
+// use notify_rust::{Notification, Hint};
 // Notification::new()
-    // .summary("Category:email")
-    // .body("This has nothing to do with emails.\nIt should not go away until you acknowledge it.")
-    // .icon("thunderbird")
-    // .appname("thunderbird")
-    // .hint(Hint::Category("email".to_owned()))
-    // .hint(Hint::Resident(true)) // this is not supported by all implementations
-    // .timeout(0) // this however is
-    // .show()?;
+// .summary("Category:email")
+// .body("This has nothing to do with emails.\nIt should not go away until you acknowledge it.")
+// .icon("thunderbird")
+// .appname("thunderbird")
+// .hint(Hint::Category("email".to_owned()))
+// .hint(Hint::Resident(true)) // this is not supported by all implementations
+// .timeout(0) // this however is
+// .show()?;
 //    Ok(())
 //}
 

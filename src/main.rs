@@ -47,13 +47,13 @@ struct Params {
     #[argh(option)]
     del: Option<String>,
 
-    /// retrieve data on main time
-    #[argh(switch, short = 'm')]
-    main: bool,
+    /// recover data from a day
+    #[argh(switch, short = 'd')]
+    daydata: bool,
 
-    /// retrieve application data
-    #[argh(switch, short = 'a')]
-    apps: bool,
+    /// retrieve data from an application
+    #[argh(option, short = 'a')]
+    app: Option<String>,
 
     /// select the date of the retrieved data, foramt : YYYY-mm-dd
     #[argh(option, default = "Utc::now().date_naive()")]
@@ -124,17 +124,13 @@ fn main() {
         flag = false;
     }
 
-    if param.main {
-        database.print_main(param.date, param.number).expect("main : Unable to work with database");
+    if param.daydata {
+        database.print_day_data(param.date).expect("daydata : Unable to work with database");
         flag = false;
     }
 
-    if param.main && param.apps {
-        println!("");
-    }
-
-    if param.apps {
-        database.print_apps(param.date).expect("apps : Unable to work with database");
+    if let Some(name) = param.app {
+        database.print_app_data(name, param.date, param.number).expect("app : Unable to work with database");
         flag = false;
     }
 

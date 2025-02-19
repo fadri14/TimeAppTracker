@@ -1,6 +1,8 @@
 use std::env;
 use std::process::Command;
 
+pub const SCREENTIME: &str = "pc";
+
 pub fn get_path_bdd() -> String {
     // If the HOME variable is well defined then we store the database in the personal folder.
     // Otherwise, it stored in the current directory
@@ -20,7 +22,7 @@ pub fn get_path_bdd() -> String {
 pub fn app_running(name: &String) -> bool {
     let name = &name[1..name.len()-1];
 
-    if name == "main" {
+    if name == SCREENTIME {
         return true;
     }
 

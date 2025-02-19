@@ -3,7 +3,7 @@ use chrono::{NaiveDate, Datelike};
 const NUMBER_MINUTES_IN_HOUR: u16 = 60;
 
 pub enum Type {
-    Main,
+    Day,
     App
 }
 
@@ -51,10 +51,10 @@ impl TimeApp {
 impl std::fmt::Display for TimeApp {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self.type_data {
-            Type::App => {
+            Type::Day => {
                 return write!(f, "{} : {}", self.name, self.time);
             }
-            Type::Main => {
+            Type::App => {
                 return write!(f, "{} {} : {}", self.date.weekday(), self.date, self.time);
             }
         }
@@ -89,7 +89,7 @@ impl Stat {
             }
         }
 
-        return Stat { max : Time::new(max), min : Time::new(min), mean : Time::new(count / (values.len() + 1) as u16) };
+        return Stat { max : Time::new(max), min : Time::new(min), mean : Time::new(count / values.len() as u16) };
     }
 }
 
