@@ -9,6 +9,6 @@ readme = "README.md"
 keywords = ["time"]
 
 [dependencies]
-rusqlite = "0.29.0"
+rusqlite = "0.33.0"
 chrono = "0.4.39"
 argh = "0.1.13"

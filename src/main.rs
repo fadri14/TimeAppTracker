@@ -62,6 +62,10 @@ struct Params {
     /// select the number of day of the retrieved data
     #[argh(option, short = 'n', default = "7")]
     number: u16,
+
+    /// inverts the result for an application
+    #[argh(switch, short = 'r')]
+    reverse: bool,
 }
 
 fn main() {
@@ -130,7 +134,7 @@ fn main() {
     }
 
     if let Some(name) = param.app {
-        database.print_app_data(name, param.date, param.number).expect("app : Unable to work with database");
+        database.print_app_data(name, param.date, param.number, param.reverse).expect("app : Unable to work with database");
         flag = false;
     }
 

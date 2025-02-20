@@ -80,8 +80,9 @@ impl Database {
             storage_size = value.parse::<u16>().unwrap_or(DEFAULT_NUMBER_DAYS_SAVED);
         }
 
-        let query = format!("DELETE FROM time WHERE JULIANDAY(DATE()) - JULIANDAY(date) > {}", storage_size);
-        self.conn.execute(&query, [])?;
+        self.conn.execute(
+            "DELETE FROM time WHERE JULIANDAY(DATE()) - JULIANDAY(date) > ?1",
+            ((&storage_size),),)?;
 
         Ok(())
     }
@@ -129,6 +130,7 @@ impl Database {
         if name != "date" && !self.contain_names(&name)? {
             let query = format!("ALTER TABLE time ADD COLUMN [{}] INTEGER DEFAULT 0", &name);
             self.conn.execute(&query, [])?;
+
             return Ok(());
         }
 
@@ -274,12 +276,17 @@ impl Database {
         Ok(())
     }
 
-    pub fn print_app_data(&self, name: String, date: NaiveDate, number_days: u16) -> Result<()> {
+    pub fn print_app_data(&self, name: String, date: NaiveDate, number_days: u16, reverse: bool) -> Result<()> {
         if ! is_app_followed(self, &name)? {
             panic!("This application is not followed");
         }
 
-        let values = ListTimeApp::new(Type::App(name.clone()), self.get_time_app(&name, date, number_days)?, date);
+        let mut values = self.get_time_app(&name, date, number_days)?;
+        if reverse {
+            values.reverse();
+        }
+
+        let values = ListTimeApp::new(Type::App(name.clone()), values, date);
         println!("{values}");
         Ok(())
     }

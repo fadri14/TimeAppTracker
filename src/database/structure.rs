@@ -54,8 +54,10 @@ pub struct ListTimeApp {
 }
 
 impl ListTimeApp {
-    pub fn new(type_data: Type, values: Vec<TimeApp>, date: NaiveDate) -> ListTimeApp {
-        ListTimeApp{ type_data, values , date }
+    pub fn new(type_data: Type, mut values: Vec<TimeApp>, date: NaiveDate) -> ListTimeApp {
+        values.sort_unstable_by_key(|item| (item.min_total));
+        values.reverse();
+        ListTimeApp{ type_data, values : values , date }
     }
 }
 
