@@ -1,5 +1,7 @@
 use std::env;
 use std::process::Command;
+use crate::Database;
+use rusqlite::Result;
 
 pub const SCREENTIME: &str = "pc";
 
@@ -65,5 +67,17 @@ pub fn format_query(names: Vec<String>, values: Vec<u16>) -> String {
     values_query.pop();
 
     format!("INSERT INTO time (date, {}) VALUES (CURRENT_DATE, {})", names_query, values_query)
+}
+
+pub fn is_app_followed(database: &Database, name: &String) -> Result<bool> {
+    let column_names = database.get_column_name()?;
+
+    for n in column_names {
+        if name == &n[1..n.len()-1] {
+            return Ok(true);
+        }
+    }
+
+    return Ok(false);
 }
 

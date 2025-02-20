@@ -219,7 +219,7 @@ impl Database {
         let mut rows = stmt.query_map(params![date.to_string()], |row| {
             let mut values: Vec<TimeApp> = Vec::new();
             for i in 0..column_names.len() {
-                values.push(TimeApp::new(Type::Day, column_names[i].clone(), date, row.get::<_, u16>(i+1)?))
+                values.push(TimeApp::new(column_names[i].clone(), date, row.get::<_, u16>(i+1)?))
             }
             Ok(values)
         })?;
@@ -233,7 +233,7 @@ impl Database {
             }
             _ => {
                 for n in 0..column_names.len() {
-                    values.push(TimeApp::new(Type::Day, column_names[n].clone(), date, 0));
+                    values.push(TimeApp::new(column_names[n].clone(), date, 0));
                 }
             }
         }
@@ -248,7 +248,7 @@ impl Database {
         let mut stmt = self.conn.prepare(&query)?;
         let rows = stmt.query_map([], |row| {
             let date = NaiveDate::parse_from_str(&row.get::<_, String>(0)?, "%Y-%m-%d").expect("Unable to retrieve a date");
-            Ok(TimeApp::new(Type::App, SCREENTIME.to_string(), date, row.get::<_, u16>(1)?))
+            Ok(TimeApp::new(SCREENTIME.to_string(), date, row.get::<_, u16>(1)?))
         })?;
 
         let mut values: Vec<TimeApp> = Vec::new();
@@ -261,7 +261,7 @@ impl Database {
         for i in 0..number_days {
             let deadline = date - Duration::days(i as i64);
             if i == values.len() as u16 || values[i as usize].date != deadline {
-                values.insert(i as usize, TimeApp::new(Type::App, SCREENTIME.to_string(), deadline, 0));
+                values.insert(i as usize, TimeApp::new(SCREENTIME.to_string(), deadline, 0));
             }
         }
 
@@ -269,40 +269,18 @@ impl Database {
     }
 
     pub fn print_day_data(&self, date: NaiveDate) -> Result<()> {
-        let values = self.get_time_day(date)?;
-        println!("\tApplication time for {} : ", date);
-        for v in values {
-            println!("{}", v);
-        }
-
-        println!("");
-
+        let values = ListTimeApp::new(Type::Day, self.get_time_day(date)?, date);
+        println!("{values}");
         Ok(())
     }
 
     pub fn print_app_data(&self, name: String, date: NaiveDate, number_days: u16) -> Result<()> {
-        let column_names = self.get_column_name()?;
-        let mut exist = false;
-        for n in column_names {
-            if name == &n[1..n.len()-1] {
-                exist = true;
-                break;
-            }
-        }
-        if !exist {
+        if ! is_app_followed(self, &name)? {
             panic!("This application is not followed");
         }
 
-        let values = self.get_time_app(&name, date, number_days)?;
-
-        println!("\tTime for {} : ", &name);
-        for v in &values {
-            println!("{}", v);
-        }
-
-        println!("\n\tStats of time for {} :\n{}", &name, Stat::new(values));
-        println!("");
-
+        let values = ListTimeApp::new(Type::App(name.clone()), self.get_time_app(&name, date, number_days)?, date);
+        println!("{values}");
         Ok(())
     }
 }

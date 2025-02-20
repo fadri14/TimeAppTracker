@@ -1,10 +1,10 @@
-use chrono::{NaiveDate, Datelike};
+use chrono::NaiveDate;
 
 const NUMBER_MINUTES_IN_HOUR: u16 = 60;
 
 pub enum Type {
     Day,
-    App
+    App(String)
 }
 
 struct Time {
@@ -34,7 +34,6 @@ impl std::fmt::Display for Time {
 }
 
 pub struct TimeApp {
-    type_data: Type,
     name: String,
     time: Time,
     pub date: NaiveDate,
@@ -42,20 +41,46 @@ pub struct TimeApp {
 }
 
 impl TimeApp {
-    pub fn new(type_data: Type, name: String, date: NaiveDate, mins: u16) -> TimeApp {
+    pub fn new(name: String, date: NaiveDate, mins: u16) -> TimeApp {
         let name = name[1..name.len()-1].to_string();
-        TimeApp { type_data, name, time : Time::new(mins), date, min_total : mins}
+        TimeApp { name, time : Time::new(mins), date, min_total : mins}
     }
 }
 
-impl std::fmt::Display for TimeApp {
+pub struct ListTimeApp {
+    values: Vec<TimeApp>,
+    type_data: Type,
+    date: NaiveDate,
+}
+
+impl ListTimeApp {
+    pub fn new(type_data: Type, values: Vec<TimeApp>, date: NaiveDate) -> ListTimeApp {
+        ListTimeApp{ type_data, values , date }
+    }
+}
+
+impl std::fmt::Display for ListTimeApp {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self.type_data {
+        match &self.type_data {
             Type::Day => {
-                return write!(f, "{} : {}", self.name, self.time);
+                let mut output = String::new();
+                output.push_str(&format!("\tApplication time for {} :\n", self.date));
+                for v in &self.values {
+                    output.push_str(&format!("{} : {}\n", v.name, v.time));
+                }
+
+                return write!(f, "{}", output);
             }
-            Type::App => {
-                return write!(f, "{} {} : {}", self.date.weekday(), self.date, self.time);
+            Type::App(name) => {
+                let mut output = String::new();
+                output.push_str(&format!("\tTime for {} :\n", name));
+                for v in &self.values {
+                    output.push_str(&format!("{} : {}\n", v.date, v.time));
+                }
+                
+                output.push_str(&format!("\n\tStats of time for {} :\n{}\n", name, Stat::new(&self.values)));
+
+                return write!(f, "{}", output);
             }
         }
     }
@@ -68,7 +93,7 @@ pub struct Stat {
 }
 
 impl Stat {
-    pub fn new(values: Vec<TimeApp>) -> Stat {
+    pub fn new(values: &Vec<TimeApp>) -> Stat {
         if values.len() == 0 {
             return Stat { max : Time::new(0), min : Time::new(0), mean : Time::new(0) };
         }
