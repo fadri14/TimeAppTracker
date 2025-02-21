@@ -21,7 +21,7 @@ pub fn get_path_bdd() -> String {
     String::from("time_app_tracker.db")
 }
 
-pub fn app_running(name: &String) -> bool {
+pub fn app_running(name: &str) -> bool {
     let name = &name[1..name.len()-1];
 
     if name == SCREENTIME {
@@ -37,7 +37,7 @@ pub fn app_running(name: &String) -> bool {
     !output.stdout.is_empty()
 }
 
-pub fn update_values(names: &Vec<String>, values: &mut Vec<u16>) {
+pub fn update_values(names: &[String], values: &mut [u16]) {
     let mut index = 0;
     while index < names.len() {
         if app_running(&names[index]) {
@@ -78,6 +78,6 @@ pub fn is_app_followed(database: &Database, name: &String) -> Result<bool> {
         }
     }
 
-    return Ok(false);
+    Ok(false)
 }
 

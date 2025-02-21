@@ -2,6 +2,7 @@ use chrono::NaiveDate;
 
 const NUMBER_MINUTES_IN_HOUR: u16 = 60;
 
+#[derive(PartialEq)]
 pub enum Type {
     Day,
     App(String)
@@ -14,10 +15,7 @@ struct Time {
 
 impl Time {
     fn new(mins: u16) -> Time {
-        if mins <= 0 {
-            return Time { hour : 0, min : 0 };
-        }
-        return Time { hour : mins / NUMBER_MINUTES_IN_HOUR, min : mins % NUMBER_MINUTES_IN_HOUR };
+        Time { hour : mins / NUMBER_MINUTES_IN_HOUR, min : mins % NUMBER_MINUTES_IN_HOUR }
     }
 }
 
@@ -29,7 +27,7 @@ impl std::fmt::Display for Time {
         if self.min < 10 {
             return write!(f, "{}h0{}", self.hour, self.min);
         }
-        return write!(f, "{}h{}", self.hour, self.min);
+        write!(f, "{}h{}", self.hour, self.min)
     }
 }
 
@@ -55,9 +53,11 @@ pub struct ListTimeApp {
 
 impl ListTimeApp {
     pub fn new(type_data: Type, mut values: Vec<TimeApp>, date: NaiveDate) -> ListTimeApp {
-        values.sort_unstable_by_key(|item| (item.min_total));
-        values.reverse();
-        ListTimeApp{ type_data, values : values , date }
+        if type_data == Type::Day {
+            values.sort_unstable_by_key(|item| (item.min_total));
+            values.reverse();
+        }
+        ListTimeApp{ type_data, values , date }
     }
 }
 
@@ -71,7 +71,7 @@ impl std::fmt::Display for ListTimeApp {
                     output.push_str(&format!("{} : {}\n", v.name, v.time));
                 }
 
-                return write!(f, "{}", output);
+                write!(f, "{}", output)
             }
             Type::App(name) => {
                 let mut output = String::new();
@@ -82,7 +82,7 @@ impl std::fmt::Display for ListTimeApp {
                 
                 output.push_str(&format!("\n\tStats of time for {} :\n{}\n", name, Stat::new(&self.values)));
 
-                return write!(f, "{}", output);
+                write!(f, "{}", output)
             }
         }
     }
@@ -95,8 +95,8 @@ pub struct Stat {
 }
 
 impl Stat {
-    pub fn new(values: &Vec<TimeApp>) -> Stat {
-        if values.len() == 0 {
+    pub fn new(values: &[TimeApp]) -> Stat {
+        if values.is_empty() {
             return Stat { max : Time::new(0), min : Time::new(0), mean : Time::new(0) };
         }
 
@@ -104,25 +104,25 @@ impl Stat {
         let mut min = values[0].min_total;
         let mut max = values[0].min_total;
 
-        for i in 1..values.len() {
-            count += values[i].min_total;
+        for v in values.iter().skip(1) {
+            count += v.min_total;
 
-            if min > values[i].min_total {
-                min = values[i].min_total;
+            if min > v.min_total {
+                min = v.min_total;
             }
 
-            if max < values[i].min_total {
-                max = values[i].min_total;
+            if max < v.min_total {
+                max = v.min_total;
             }
         }
 
-        return Stat { max : Time::new(max), min : Time::new(min), mean : Time::new(count / values.len() as u16) };
+        Stat { max : Time::new(max), min : Time::new(min), mean : Time::new(count / values.len() as u16) }
     }
 }
 
 impl std::fmt::Display for Stat {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        return write!(f, "Max : {}\nMin : {}\nMean: {}", self.max, self.min, self.mean);
+        write!(f, "Max : {}\nMin : {}\nMean: {}", self.max, self.min, self.mean)
     }
 }
 

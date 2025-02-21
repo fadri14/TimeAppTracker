@@ -16,7 +16,7 @@ struct Settings {
 
 impl std::fmt::Display for Settings {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        return write!(f, "\tSettings :\nState : {}\nStorage size : {}", self.state, self.storage_size);
+        write!(f, "\tSettings :\nState : {}\nStorage size : {}", self.state, self.storage_size)
     }
 }
 
@@ -44,11 +44,11 @@ impl Database {
             (),
         )?;
 
-        Ok(Database{ conn : conn })
+        Ok(Database{ conn })
     }
 
     pub fn update(&self) -> Result<()> {
-        if self.get_settings()?.state == String::from("on") {
+        if self.get_settings()?.state == *"on" {
             self.delete_old_data()?;
             self.increment_time()?;
         }
@@ -174,10 +174,7 @@ impl Database {
             storage_size = value.parse::<u16>().unwrap_or(DEFAULT_NUMBER_DAYS_SAVED);
         }
 
-        Ok(Settings {
-            state : state,
-            storage_size : storage_size
-        })
+        Ok(Settings { state, storage_size })
     }
 
     pub fn display_settings(&self) -> Result<()> {
@@ -207,7 +204,7 @@ impl Database {
 
     pub fn switch_state(&self) -> Result<()> {
         match self.get_attribute(String::from("state"))? {
-            Some(value) if value == String::from("on") => self.change_settings(String::from("state"), String::from("off"))?,
+            Some(value) if value == *"on" => self.change_settings(String::from("state"), String::from("off"))?,
             _ => self.change_settings(String::from("state"), String::from("on"))?
         }
 
@@ -220,8 +217,8 @@ impl Database {
         let mut stmt = self.conn.prepare("SELECT * FROM time WHERE date = ?1")?;
         let mut rows = stmt.query_map(params![date.to_string()], |row| {
             let mut values: Vec<TimeApp> = Vec::new();
-            for i in 0..column_names.len() {
-                values.push(TimeApp::new(column_names[i].clone(), date, row.get::<_, u16>(i+1)?))
+            for (i, name) in column_names.iter().enumerate() {
+                values.push(TimeApp::new(name.clone(), date, row.get::<_, u16>(i+1)?))
             }
             Ok(values)
         })?;
@@ -234,8 +231,8 @@ impl Database {
                 }
             }
             _ => {
-                for n in 0..column_names.len() {
-                    values.push(TimeApp::new(column_names[n].clone(), date, 0));
+                for name in &column_names {
+                    values.push(TimeApp::new(name.clone(), date, 0));
                 }
             }
         }
@@ -246,7 +243,7 @@ impl Database {
     fn get_time_app(&self, name: &String, date: NaiveDate, number_days: u16) -> Result<Vec<TimeApp>> {
         let query = format!(
             "SELECT date, [{}] FROM time WHERE date <= '{}' and date >= DATE('{}', '-{} days') ORDER BY date DESC",
-            name, date.to_string(), date.to_string(), number_days);
+            name, date, date, number_days);
         let mut stmt = self.conn.prepare(&query)?;
         let rows = stmt.query_map([], |row| {
             let date = NaiveDate::parse_from_str(&row.get::<_, String>(0)?, "%Y-%m-%d").expect("Unable to retrieve a date");
@@ -254,10 +251,11 @@ impl Database {
         })?;
 
         let mut values: Vec<TimeApp> = Vec::new();
-        for row in rows {
-            if let Ok(time) = row {
-                values.push(time);
-            }
+        for row in rows.flatten() {
+            values.push(row);
+            // if let Ok(time) = row {
+                // values.push(time);
+            // }
         }
 
         for i in 0..number_days {

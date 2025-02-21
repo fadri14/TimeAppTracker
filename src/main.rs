@@ -80,10 +80,10 @@ fn main() {
     }
 
     if let Some(mode) = param.state {
-        if mode == String::from("on") || mode == String::from("off") {
+        if mode == *"on" || mode == *"off" {
             database.change_settings(String::from("state"), mode).expect("state : Unable to work with database");
         }
-        else if mode == String::from("switch") {
+        else if mode == *"switch" {
             database.switch_state().expect("state : Unable to work with database");
         }
         else {
