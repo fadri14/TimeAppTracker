@@ -1,5 +1,6 @@
 use rusqlite::{Connection, Result, params};
 use chrono::{Duration, NaiveDate};
+use notify_rust::Notification;
 
 mod backend;
 mod structure;
@@ -44,6 +45,14 @@ impl Database {
             (),
         )?;
 
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS notification (
+                app TEXT PRIMARY KEY,
+                time INTEGER
+            )",
+            (),
+        )?;
+
         Ok(Database{ conn })
     }
 
@@ -67,6 +76,7 @@ impl Database {
         self.conn.execute("DELETE FROM time WHERE date = CURRENT_DATE", (),)?;
 
         update_values(&column_names, &mut values);
+        self.check_notif(&column_names, &values)?;
 
         let query = format_query(column_names, values);
         self.conn.execute(&query, [])?;
@@ -90,18 +100,16 @@ impl Database {
     fn get_column_name(&self) -> Result<Vec<String>> {
         let mut stmt = self.conn.prepare("PRAGMA table_info(time)")?;
 
-        let column_info_iter = stmt.query_map([], |row| {
+        let column_names = stmt.query_map([], |row| {
             row.get::<_, String>(1)
         })?;
 
-        let mut column_names = Vec::new();
-
-        for column_name in column_info_iter {
-            column_names.push("[".to_string() + &column_name? + "]");
+        let mut names = Vec::new();
+        for name in column_names {
+            names.push(name?);
         }
-
-        column_names.remove(0);
-        Ok(column_names)
+        names.remove(0);
+        Ok(names)
     }
 
     fn get_values(&self) -> Result<Vec<u16>> {
@@ -148,19 +156,14 @@ impl Database {
             return Ok(());
         }
 
+        self.del_notif(&name)?;
+
         panic!("The application you want to delete does not exist");
     }
 
     fn contain_names(&self, name: &String) -> Result<bool> {
         let column_names = self.get_column_name()?;
-
-        for n in column_names {
-            if name == &n[1..n.len()-1] {
-                return Ok(true);
-            }
-        }
-
-        Ok(false)
+        Ok(column_names.contains(name))
     }
 
     fn get_settings(&self) -> Result<Settings> {
@@ -254,7 +257,7 @@ impl Database {
         for row in rows.flatten() {
             values.push(row);
             // if let Ok(time) = row {
-                // values.push(time);
+            // values.push(time);
             // }
         }
 
@@ -275,7 +278,7 @@ impl Database {
     }
 
     pub fn print_app_data(&self, name: String, date: NaiveDate, number_days: u16, reverse: bool) -> Result<()> {
-        if ! is_app_followed(self, &name)? {
+        if ! self.contain_names(&name)? {
             panic!("This application is not followed");
         }
 
@@ -288,32 +291,53 @@ impl Database {
         println!("{values}");
         Ok(())
     }
-}
 
-//pub fn set_notif(name: String, time: DateTime) -> Result<()> {
-// Se connecter à la bdd et créer la table
-// Surprimmer les lignes où il y a name pour être sûr qu'il y en a qu'un seul
-// insérer une nouvelle ligne avec name et time
-//
-// exemple :
-// notify-rust
-// use notify_rust::Notification;
-// Notification::new()
-// .summary("Firefox News")
-// .body("This will almost look like a real firefox notification.")
-// .icon("firefox")
-// .show()?;
-// 
-// use notify_rust::{Notification, Hint};
-// Notification::new()
-// .summary("Category:email")
-// .body("This has nothing to do with emails.\nIt should not go away until you acknowledge it.")
-// .icon("thunderbird")
-// .appname("thunderbird")
-// .hint(Hint::Category("email".to_owned()))
-// .hint(Hint::Resident(true)) // this is not supported by all implementations
-// .timeout(0) // this however is
-// .show()?;
-//    Ok(())
-//}
+    pub fn add_notif(&self, name: &String, time: u16) -> Result<()> {
+        if ! self.contain_names(name)? {
+            panic!("This application is not followed");
+        }
+
+        self.del_notif(name)?;
+        self.conn.execute("INSERT INTO notification (app, time) VALUES (?1, ?2)", (name, &time),)?;
+
+        Ok(())
+    }
+
+    pub fn del_notif(&self, name: &str) -> Result<()> {
+        self.conn.execute("DELETE FROM notification WHERE app = ?1", ((name),),)?;
+        Ok(())
+    }
+
+    fn check_notif(&self, names: &[String], values: &[u16]) -> Result<()> {
+        for (i, name) in names.iter().enumerate() {
+            let mut stmt = self.conn.prepare(&format!("SELECT 1 FROM notification WHERE app = '{}' AND time = {} LIMIT 1", &name, values[i]))?;
+            let mut rows = stmt.query_map(params![], |_| {
+                Notification::new()
+                    .summary(&format!("Time passed for {}", &name))
+                    .body(&format!("It has been {} for you to use {}. You have exceeded the set limit", Time::new(values[i]), &name))
+                    .appname("Time App Tracker")
+                    .show().expect("Impossible d'envoyer de notification");
+                Ok(())
+            })?;
+
+            while let Some(Ok(())) = rows.next() {}
+        }
+        Ok(())
+    }
+
+    pub fn print_notif(&self) ->Result<()> {
+        let mut stmt = self.conn.prepare("SELECT app, time FROM notification")?;
+        let mut rows = stmt.query_map(params![], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, u16>(1)?))
+        })?;
+
+        println!("List of notifications :");
+        while let Some(Ok((app, time))) = rows.next() {
+            println!("{} => {}", app, Time::new(time));
+        }
+        println!();
+
+        Ok(())
+    }
+}
 

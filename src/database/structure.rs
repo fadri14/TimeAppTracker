@@ -8,13 +8,14 @@ pub enum Type {
     App(String)
 }
 
-struct Time {
+#[derive(Default)]
+pub struct Time {
     hour: u16,
     min: u16,
 }
 
 impl Time {
-    fn new(mins: u16) -> Time {
+    pub fn new(mins: u16) -> Time {
         Time { hour : mins / NUMBER_MINUTES_IN_HOUR, min : mins % NUMBER_MINUTES_IN_HOUR }
     }
 }
@@ -24,7 +25,10 @@ impl std::fmt::Display for Time {
         if self.hour == 0 {
             return write!(f, "{}m", self.min);
         }
-        if self.min < 10 {
+        else if self.min == 0 {
+            return write!(f, "{}h", self.hour);
+        }
+        else if self.min < 10 {
             return write!(f, "{}h0{}", self.hour, self.min);
         }
         write!(f, "{}h{}", self.hour, self.min)
@@ -40,7 +44,6 @@ pub struct TimeApp {
 
 impl TimeApp {
     pub fn new(name: String, date: NaiveDate, mins: u16) -> TimeApp {
-        let name = name[1..name.len()-1].to_string();
         TimeApp { name, time : Time::new(mins), date, min_total : mins}
     }
 }
@@ -88,24 +91,27 @@ impl std::fmt::Display for ListTimeApp {
     }
 }
 
+#[derive(Default)]
 pub struct Stat {
     max: Time,
     min: Time,
+    sum: Time,
     mean: Time,
 }
 
 impl Stat {
     pub fn new(values: &[TimeApp]) -> Stat {
         if values.is_empty() {
-            return Stat { max : Time::new(0), min : Time::new(0), mean : Time::new(0) };
+            return Stat::default();
+            // return Stat { max : Time::new(0), min : Time::new(0), sum : Time::new(0), mean : Time::new(0) };
         }
 
-        let mut count = values[0].min_total;
+        let mut sum = values[0].min_total;
         let mut min = values[0].min_total;
         let mut max = values[0].min_total;
 
         for v in values.iter().skip(1) {
-            count += v.min_total;
+            sum += v.min_total;
 
             if min > v.min_total {
                 min = v.min_total;
@@ -116,13 +122,13 @@ impl Stat {
             }
         }
 
-        Stat { max : Time::new(max), min : Time::new(min), mean : Time::new(count / values.len() as u16) }
+        Stat { max : Time::new(max), min : Time::new(min), sum : Time::new(sum), mean : Time::new(sum / values.len() as u16) }
     }
 }
 
 impl std::fmt::Display for Stat {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Max : {}\nMin : {}\nMean: {}", self.max, self.min, self.mean)
+        write!(f, "Max : {}\nMin : {}\nSum : {}\nMean: {}", self.max, self.min, self.sum, self.mean)
     }
 }
 

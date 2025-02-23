@@ -1,7 +1,5 @@
 use std::env;
 use std::process::Command;
-use crate::Database;
-use rusqlite::Result;
 
 pub const SCREENTIME: &str = "pc";
 
@@ -22,8 +20,6 @@ pub fn get_path_bdd() -> String {
 }
 
 pub fn app_running(name: &str) -> bool {
-    let name = &name[1..name.len()-1];
-
     if name == SCREENTIME {
         return true;
     }
@@ -48,9 +44,16 @@ pub fn update_values(names: &[String], values: &mut [u16]) {
     }
 }
 
-pub fn format_query(names: Vec<String>, values: Vec<u16>) -> String {
+pub fn format_query(column_names: Vec<String>, values: Vec<u16>) -> String {
     let mut names_query = String::new();
     let mut values_query = String::new();
+
+    let mut names: Vec<String> = Vec::new();
+    for mut n in column_names {
+        n.insert(0, '[');
+        n.push(']');
+        names.push(n);
+    }
 
     let mut index = 0;
     while index < names.len() {
@@ -67,17 +70,5 @@ pub fn format_query(names: Vec<String>, values: Vec<u16>) -> String {
     values_query.pop();
 
     format!("INSERT INTO time (date, {}) VALUES (CURRENT_DATE, {})", names_query, values_query)
-}
-
-pub fn is_app_followed(database: &Database, name: &String) -> Result<bool> {
-    let column_names = database.get_column_name()?;
-
-    for n in column_names {
-        if name == &n[1..n.len()-1] {
-            return Ok(true);
-        }
-    }
-
-    Ok(false)
 }
 

@@ -27,13 +27,21 @@ struct Params {
     #[argh(switch, short = 's')]
     settings: bool,
 
-    ///// enables notification mode for an application
-    //#[argh(option)]
-    //notif_app: Option<String>,
-//
-    ///// specifies the time before receiving a notification
-    //#[argh(option)]
-    //notif_time: Option<String>,
+    /// enables notification mode for an application
+    #[argh(option)]
+    add_notif: Option<String>,
+
+    /// specifies the time before receiving a notification
+    #[argh(option)]
+    notif_time: Option<u16>,
+
+    /// removes notification functionality for an application
+    #[argh(option)]
+    del_notif: Option<String>,
+
+    /// displays the list of notifications
+    #[argh(switch)]
+    print_notif: bool,
 
     /// launch update
     #[argh(switch, short = 'u')]
@@ -102,16 +110,27 @@ fn main() {
         flag = false;
     }
 
-    //if let Some(name) = param.notif_app {
-    //match (param.notif_app, param.notif_time) {
-        //(Some(name), Some(time)) => {
-        //et time = DateTime::parse_from_str(time, "%H:%M").expect("Wrong duration syntax. Used HH:MM");
-        //database.set_notif(name, time).expect("notif_app : Unable to work with database");
-        //},
-        //_ => println!("Error : you must use the arguments [--notif_app] and [--notif_time] at the same time"),
-    //}
-        //flag = false;
-    //}
+    match (param.add_notif, param.notif_time) {
+        (Some(name), Some(time)) => {
+            database.add_notif(&name, time).expect("notif_app : Unable to work with database");
+            flag = false;
+        },
+        (None, None) => (),
+        _ => {
+            println!("Error : you must use the arguments [--notif_app] and [--notif_time] at the same time");
+            flag = false;
+        }
+    }
+
+    if let Some(name) = param.del_notif{
+        database.del_notif(&name).expect("del_notif_app : Unable to work with database");
+        flag = false;
+    }
+
+    if param.print_notif {
+        database.print_notif().expect("print_notif : Unable to work with database");
+        flag = false;
+    }
 
     if param.update {
         database.update().expect("update : Unable to work with database");

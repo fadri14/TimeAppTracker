@@ -12,3 +12,4 @@ keywords = ["time"]
 rusqlite = "0.33.0"
 chrono = "0.4.39"
 argh = "0.1.13"
+notify-rust = "4.11.5"
