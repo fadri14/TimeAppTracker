@@ -31,59 +31,80 @@ time_app_tracker --help
 
 #### Output of help
 ```
-Usage: time_app_tracker [-p] [-s] [-u] [-a <add>] [-d <del>] [--main] [--apps] [--date <date>] [-n <number>]
+Usage: time_app_tracker [-v] [--state <state>] [--storage <storage>] [-s] [--add-notif <add-notif>] [--notif-time <notif-time>] [--del-notif <del-notif>] [--print-notif] [-u] [--add <add>] [--del <del>] [-d] [-a <app>] [--date <date>] [-n <number>] [-r]
 
-CLI to track usage times
+CLI to track usage times for pc and applications
 
 Options:
-  -p, --pause       pause the timer
-  -s, --status      get the status of timer
+  -v, --version     to get the current version number
+  --state           switch between on and off state
+  --storage         change the size of the storage
+  -s, --settings    get the settings of this application
+  --add-notif       enables notification mode for an application
+  --notif-time      indicates the time in minutes before a notification is sent
+  --del-notif       removes notification functionality for an application
+  --print-notif     displays the list of notifications
   -u, --update      launch update
-  -a, --add         add a application
-  -d, --del         delete a application
-  --main            retrieve data on main time
-  --apps            retrieve application data
+  --add             add a application
+  --del             delete a application
+  -d, --daydata     recover data from a day
+  -a, --app         retrieve data from an application
   --date            select the date of the retrieved data, foramt : YYYY-mm-dd
   -n, --number      select the number of day of the retrieved data
+  -r, --reverse     inverts the result for an application
   -h, --help, help  display usage information
 ```
 
 ### Example of interface
+#### The data of the day
+##### Command
 ```
-time_app_tracker --main --apps --date 2025-02-15 -n 3
+time_app_tracker -d
 ```
 
-#### Output
+##### Output
 ```
-	PC time :
-Sat 2025-02-15 : 3h26
-Fri 2025-02-14 : 4h33
-Thu 2025-02-13 : 4h03
+	Application time for 2025-02-23 :
+pc : 13m
+nvim : 7m
+alacritty : 3m
+```
 
-	Stats of PC time :
-Max : 4h33
-Min : 3h26
-Mean: 3h00
+#### Data for neovim over 3 days
+##### Command
+```
+time_app_tracker -a nvim -n 3
+```
 
-	Application time for 2025-02-15 :
-alacritty : 2h52
-nvim : 2h14
-librewolf : 1h25
-freetube : 45m
-signal-desktop : 0m
-discord : 0m
-netflix : 0m
-xournalpp : 0m
-spotube : 54m
-nautilus : 0m
-gnome-calculator : 0m
-evince : 58m
+##### Output
+```
+	Time for nvim :
+2025-02-23 : 7m
+2025-02-22 : 0m
+2025-02-21 : 0m
+
+	Stats of time for nvim :
+Max : 7m
+Min : 0m
+Sum : 7m
+Mean: 2m
+```
+
+#### Add a notification for the pc screen time after 3 hours and list the activated notifications
+##### Command
+```
+time_app_tracker --add-notif pc --notif-time 180 --print-notif
+```
+
+##### Output
+```
+List of notifications :
+pc => 3h
 ```
 
 ## Roadmap
-- Add support for flatpaks
-- Add the possibility to notify when an application has exceeded a certain time
 - A TUI
 
 ## Limitation
 As the timer works with the cron service that is activated every minute, there is a margin of error of one minute each time an application is used.
+

@@ -15,8 +15,7 @@ pub fn get_path_bdd() -> String {
         _ => path.push_str(".time_app_tracker.db"),
     }
 
-    //path
-    String::from("time_app_tracker.db")
+    path
 }
 
 pub fn app_running(name: &str) -> bool {
