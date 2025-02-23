@@ -142,23 +142,25 @@ impl Database {
             return Ok(());
         }
 
-        panic!("the app you want to add is already present");
+        eprintln!("Error : The app you want to add is already present");
+        Ok(())
     }
 
     pub fn del_app(&self, name: String) -> Result<()> {
         if name == "date" || name == SCREENTIME {
-            panic!("You cannot delete the {} column", name);
+            eprintln!("Error : You cannot delete the {} column", name);
+            return Ok(());
         }
 
         if self.contain_names(&name)? {
             let query = format!("ALTER TABLE time DROP [{}]", &name);
             self.conn.execute(&query, [])?;
+            self.del_notif(&name)?;
             return Ok(());
         }
 
-        self.del_notif(&name)?;
-
-        panic!("The application you want to delete does not exist");
+        eprintln!("Error : The application you want to delete does not exist");
+        Ok(())
     }
 
     fn contain_names(&self, name: &String) -> Result<bool> {
@@ -279,7 +281,8 @@ impl Database {
 
     pub fn print_app_data(&self, name: String, date: NaiveDate, number_days: u16, reverse: bool) -> Result<()> {
         if ! self.contain_names(&name)? {
-            panic!("This application is not followed");
+            eprintln!("Error : This application is not followed");
+            return Ok(());
         }
 
         let mut values = self.get_time_app(&name, date, number_days)?;
@@ -294,7 +297,8 @@ impl Database {
 
     pub fn add_notif(&self, name: &String, time: u16) -> Result<()> {
         if ! self.contain_names(name)? {
-            panic!("This application is not followed");
+            eprintln!("Error : This application is not followed");
+            return Ok(());
         }
 
         self.del_notif(name)?;

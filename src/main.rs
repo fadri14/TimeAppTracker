@@ -95,7 +95,7 @@ fn main() {
             database.switch_state().expect("state : Unable to work with database");
         }
         else {
-            println!("Error : there are only three possible modes [on|off|switch]");
+            eprintln!("Error : there are only three possible modes [on|off|switch]");
         }
         flag = false;
     }
@@ -117,7 +117,7 @@ fn main() {
         },
         (None, None) => (),
         _ => {
-            println!("Error : you must use the arguments [--notif_app] and [--notif_time] at the same time");
+            eprintln!("Error : you must use the arguments [--notif_app] and [--notif_time] at the same time");
             flag = false;
         }
     }
