@@ -31,7 +31,7 @@ struct Params {
     #[argh(option)]
     add_notif: Option<String>,
 
-    /// specifies the time before receiving a notification
+    /// indicates the time in minutes before a notification is sent
     #[argh(option)]
     notif_time: Option<u16>,
 
@@ -88,10 +88,10 @@ fn main() {
     }
 
     if let Some(mode) = param.state {
-        if mode == *"on" || mode == *"off" {
-            database.change_settings(String::from("state"), mode).expect("state : Unable to work with database");
+        if mode == "on" || mode == "off" {
+            database.change_settings("state", &mode).expect("state : Unable to work with database");
         }
-        else if mode == *"switch" {
+        else if mode == "switch" {
             database.switch_state().expect("state : Unable to work with database");
         }
         else {
@@ -101,7 +101,7 @@ fn main() {
     }
 
     if let Some(number) = param.storage {
-        database.change_settings(String::from("storage_size"), number.to_string()).expect("storage : Unable to work with database");
+        database.change_settings("storage_size", &number.to_string()).expect("storage : Unable to work with database");
         flag = false;
     }
 

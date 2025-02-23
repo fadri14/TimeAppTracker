@@ -57,7 +57,7 @@ impl Database {
     }
 
     pub fn update(&self) -> Result<()> {
-        if self.get_settings()?.state == *"on" {
+        if self.get_settings()?.state == "on" {
             self.delete_old_data()?;
             self.increment_time()?;
         }
@@ -86,7 +86,7 @@ impl Database {
 
     fn delete_old_data(&self) -> Result<()> {
         let mut storage_size = DEFAULT_NUMBER_DAYS_SAVED;
-        if let Some(value) = self.get_attribute(String::from("storage_size"))? {
+        if let Some(value) = self.get_attribute("storage_size")? {
             storage_size = value.parse::<u16>().unwrap_or(DEFAULT_NUMBER_DAYS_SAVED);
         }
 
@@ -168,12 +168,12 @@ impl Database {
 
     fn get_settings(&self) -> Result<Settings> {
         let mut state = String::from("on");
-        if let Some(value) = self.get_attribute(String::from("state"))? {
+        if let Some(value) = self.get_attribute("state")? {
             state = value;
         }
 
         let mut storage_size = DEFAULT_NUMBER_DAYS_SAVED;
-        if let Some(value) = self.get_attribute(String::from("storage_size"))? {
+        if let Some(value) = self.get_attribute("storage_size")? {
             storage_size = value.parse::<u16>().unwrap_or(DEFAULT_NUMBER_DAYS_SAVED);
         }
 
@@ -185,7 +185,7 @@ impl Database {
         Ok(())
     }
 
-    fn get_attribute(&self, name: String) -> Result<Option<String>> {
+    fn get_attribute(&self, name: &str) -> Result<Option<String>> {
         let mut stmt = self.conn.prepare("SELECT value FROM settings WHERE attribute = ?1")?;
 
         let mut rows = stmt.query_map([&name], |row| {
@@ -199,16 +199,16 @@ impl Database {
         Ok(None)
     }
 
-    pub fn change_settings(&self, name: String, value: String) -> Result<()> {
+    pub fn change_settings(&self, name: &str, value: &str) -> Result<()> {
         self.conn.execute("DELETE FROM settings WHERE attribute = ?1", ((&name),),)?;
         self.conn.execute("INSERT INTO settings (attribute, value) VALUES (?1, ?2)", (&name, &value),)?;
         Ok(())
     }
 
     pub fn switch_state(&self) -> Result<()> {
-        match self.get_attribute(String::from("state"))? {
-            Some(value) if value == *"on" => self.change_settings(String::from("state"), String::from("off"))?,
-            _ => self.change_settings(String::from("state"), String::from("on"))?
+        match self.get_attribute("state")? {
+            Some(value) if value == "on" => self.change_settings("state", "off")?,
+            _ => self.change_settings("state", "on")?
         }
 
         Ok(())
@@ -243,7 +243,7 @@ impl Database {
         Ok(values)
     }
 
-    fn get_time_app(&self, name: &String, date: NaiveDate, number_days: u16) -> Result<Vec<TimeApp>> {
+    fn get_time_app(&self, name: &str, date: NaiveDate, number_days: u16) -> Result<Vec<TimeApp>> {
         let query = format!(
             "SELECT date, [{}] FROM time WHERE date <= '{}' and date >= DATE('{}', '-{} days') ORDER BY date DESC",
             name, date, date, number_days);
