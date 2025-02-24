@@ -4,7 +4,7 @@ version = "0.1.6"
 edition = "2021"
 license = "MIT"
 description = "Count the time you spend on the pc and the desired applications"
-repository = "https://github.com/fadri14/TimeTracker"
+repository = "https://github.com/fadri14/TimeAppTracker"
 readme = "README.md"
 keywords = ["time"]
 
