@@ -108,6 +108,30 @@ Sum : 10h56
 Mean: 3h38
 ```
 
+#### Get info on last week's pc use
+##### Command
+```
+time_app_tracker -q app-pc --date last_week
+```
+
+##### Output
+```
+	Time for pc :
+2025-03-02 : 0m
+2025-03-01 : 0m
+2025-02-28 : 3h01
+2025-02-27 : 10h
+2025-02-26 : 8h40
+2025-02-25 : 11h26
+2025-02-24 : 7h37
+
+	Stats of time for pc :
+Max : 11h26
+Min : 0m
+Sum : 40h44
+Mean: 5h49
+```
+
 #### Add a notification for the pc screen time after 3 hours and list the activated notifications
 ##### Command
 ```
