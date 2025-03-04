@@ -9,7 +9,7 @@ This program allows to save the time spent on the pc and the desired application
 - sqlite
 
 ## Installation
-Installation of the application.
+Installation of the application. Use the same command to update.
 ```
 cargo install time_app_tracker
 ```
@@ -31,7 +31,7 @@ time_app_tracker --help
 
 #### Output of help
 ```
-Usage: time_app_tracker [-v] [--state <state>] [--storage <storage>] [-s] [--add-notif <add-notif>] [--notif-time <notif-time>] [--del-notif <del-notif>] [--print-notif] [-u] [--add <add>] [--del <del>] [-d] [-a <app>] [--date <date>] [-n <number>] [-r]
+Usage: time_app_tracker [-v] [--state <state>] [--storage <storage>] [-s] [--add-notif <add-notif>] [--notif-time <notif-time>] [--del-notif <del-notif>] [--print-notif] [-u] [--add <add>] [--del <del>] [-q <query>] [--date <date>] [-n <number>] [-r]
 
 CLI to track usage times for pc and applications
 
@@ -47,9 +47,11 @@ Options:
   -u, --update      launch update
   --add             add a application
   --del             delete a application
-  -d, --daydata     recover data from a day
-  -a, --app         retrieve data from an application
-  --date            select the date of the retrieved data, foramt : YYYY-mm-dd
+  -q, --query       to retrieve data either for a day's info with [daydata] or
+                    an application's info with [app-<name>]
+  --date            select the date of the retrieved data, foramt : YYYY-mm-dd.
+                    you can also use keywords such as yesterday, last_week or a
+                    day of the week (monday…).
   -n, --number      select the number of day of the retrieved data
   -r, --reverse     inverts the result for an application
   -h, --help, help  display usage information
@@ -59,35 +61,51 @@ Options:
 #### The data of the day
 ##### Command
 ```
-time_app_tracker -d
+time_app_tracker -q daydata
 ```
 
 ##### Output
 ```
-	Application time for 2025-02-23 :
-pc : 13m
-nvim : 7m
-alacritty : 3m
+	Application time for 2025-03-04 :
+pc : 7h56
+alacritty : 4h33
+nvim : 4h29
+librewolf : 3h35
+```
+
+#### Last Tuesday's data
+##### Command
+```
+time_app_tracker -q daydata --date tue
+```
+
+##### Output
+```
+    Application time for 2025-02-25 :
+pc : 11h26
+librewolf : 8h26
+alacritty : 7h49
+nvim : 4h38
 ```
 
 #### Data for neovim over 3 days
 ##### Command
 ```
-time_app_tracker -a nvim -n 3
+time_app_tracker -q app-nvim -n 3
 ```
 
 ##### Output
 ```
 	Time for nvim :
-2025-02-23 : 7m
-2025-02-22 : 0m
-2025-02-21 : 0m
+2025-03-04 : 4h34
+2025-03-03 : 6h22
+2025-03-02 : 0m
 
 	Stats of time for nvim :
-Max : 7m
+Max : 6h22
 Min : 0m
-Sum : 7m
-Mean: 2m
+Sum : 10h56
+Mean: 3h38
 ```
 
 #### Add a notification for the pc screen time after 3 hours and list the activated notifications
@@ -101,9 +119,6 @@ time_app_tracker --add-notif pc --notif-time 180 --print-notif
 List of notifications :
 pc => 3h
 ```
-
-## Roadmap
-- A TUI
 
 ## Limitation
 As the timer works with the cron service that is activated every minute, there is a margin of error of one minute each time an application is used.

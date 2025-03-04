@@ -61,11 +61,11 @@ struct Params {
     #[argh(option)]
     del: Option<String>,
 
-    /// todo
+    /// to retrieve data either for a day's info with [daydata] or an application's info with [app-<name>]
     #[argh(option, short = 'q')]
     query: Option<String>,
 
-    /// select the date of the retrieved data, foramt : YYYY-mm-dd
+    /// select the date of the retrieved data, foramt : YYYY-mm-dd. you can also use keywords such as yesterday, last_week or a day of the week (monday…).
     #[argh(option)]
     date: Option<String>,
 
@@ -159,7 +159,7 @@ fn main() {
             database.print_app_data(query[4..].to_string(), date, number, param.reverse).expect("app : Unable to work with database");
         }
         else {
-            eprintln!("todo");
+            eprintln!("Query error. Please use [daydata] or [app-<name>] as query parameter");
         }
         flag = false;
     }
