@@ -8,7 +8,7 @@ mod structure;
 use backend::*;
 use structure::*;
 
-const DEFAULT_NUMBER_DAYS_SAVED: u16 = 28;
+const DEFAULT_NUMBER_DAYS_SAVED: u16 = 100;
 
 struct Settings {
     state: String,
@@ -258,9 +258,6 @@ impl Database {
         let mut values: Vec<TimeApp> = Vec::new();
         for row in rows.flatten() {
             values.push(row);
-            // if let Ok(time) = row {
-            // values.push(time);
-            // }
         }
 
         for i in 0..number_days {
@@ -273,9 +270,12 @@ impl Database {
         Ok(values)
     }
 
-    pub fn print_day_data(&self, date: NaiveDate) -> Result<()> {
-        let values = ListTimeApp::new(Type::Day, self.get_time_day(date)?, date);
-        println!("{values}");
+    pub fn print_day_data(&self, date: NaiveDate, number_days: u16) -> Result<()> {
+        for i in 0..number_days {
+            let date_query = date - chrono::Duration::days(i as i64);
+            let values = ListTimeApp::new(Type::Day, self.get_time_day(date_query)?, date_query);
+            println!("{values}\n");
+        }
         Ok(())
     }
 

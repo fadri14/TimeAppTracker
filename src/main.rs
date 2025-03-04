@@ -1,11 +1,17 @@
 use argh::FromArgs;
-use chrono::{Utc, NaiveDate};
+use chrono::{Utc, Datelike, Duration, NaiveDate, Weekday};
 
 mod database;
 
 use database::Database;
 
-const VERSION_NUMBER: &str = "v0.1.6";
+const VERSION_NUMBER: &str = "v0.1.7";
+
+#[derive(PartialEq)]
+enum TypeRequest {
+    Day,
+    App
+}
 
 #[derive(FromArgs)]
 #[argh(help_triggers("-h", "--help", "help"))]
@@ -55,20 +61,16 @@ struct Params {
     #[argh(option)]
     del: Option<String>,
 
-    /// recover data from a day
-    #[argh(switch, short = 'd')]
-    daydata: bool,
-
-    /// retrieve data from an application
-    #[argh(option, short = 'a')]
-    app: Option<String>,
+    /// todo
+    #[argh(option, short = 'q')]
+    query: Option<String>,
 
     /// select the date of the retrieved data, foramt : YYYY-mm-dd
-    #[argh(option, default = "Utc::now().date_naive()")]
-    date: NaiveDate,
+    #[argh(option)]
+    date: Option<String>,
 
     /// select the number of day of the retrieved data
-    #[argh(option, short = 'n', default = "7")]
+    #[argh(option, short = 'n', default = "0")]
     number: u16,
 
     /// inverts the result for an application
@@ -147,18 +149,78 @@ fn main() {
         flag = false;
     }
 
-    if param.daydata {
-        database.print_day_data(param.date).expect("daydata : Unable to work with database");
-        flag = false;
-    }
-
-    if let Some(name) = param.app {
-        database.print_app_data(name, param.date, param.number, param.reverse).expect("app : Unable to work with database");
+    if let Some(query) = param.query {
+        if query == "daydata" {
+            let (date, number) = get_value_or_default(TypeRequest::Day, param.date, param.number);
+            database.print_day_data(date, number).expect("daydata : Unable to work with database");
+        }
+        else if query.len() >= 5 && query[0..4] == *"app-" {
+            let (date, number) = get_value_or_default(TypeRequest::App, param.date, param.number);
+            database.print_app_data(query[4..].to_string(), date, number, param.reverse).expect("app : Unable to work with database");
+        }
+        else {
+            eprintln!("todo");
+        }
         flag = false;
     }
 
     if flag {
         println!("run `time_app_tracker --help` for help");
     }
+}
+
+fn get_value_or_default(type_request: TypeRequest, date: Option<String>, number: u16) -> (NaiveDate, u16) {
+    let date = date.clone().unwrap_or_else(|| String::from("today"));
+    let mut date_res = Utc::now().date_naive();
+
+    let mut number_res: u16;
+    if number == 0 {
+        match type_request {
+            TypeRequest::Day => number_res = 1,
+            TypeRequest::App => number_res = 10,
+        }
+    }
+    else {
+        number_res = number;
+    }
+
+    match date.to_lowercase().as_str() {
+        "today" | "t" => (),
+        "yesterday" | "y" => date_res = Utc::now().date_naive() - Duration::days(1),
+        "monday" | "mon" => date_res = weekday_to_date(Weekday::Mon),
+        "tuesday" | "tue" => date_res = weekday_to_date(Weekday::Tue),
+        "wednesday" | "wed" => date_res = weekday_to_date(Weekday::Wed),
+        "thursday" | "thu" => date_res = weekday_to_date(Weekday::Thu),
+        "friday" | "fri" => date_res = weekday_to_date(Weekday::Fri),
+        "saturday" | "sat" => date_res = weekday_to_date(Weekday::Sat),
+        "sunday" | "sun" => date_res = weekday_to_date(Weekday::Sun),
+        "last_week" | "lw" => {
+            date_res = weekday_to_date(Weekday::Sun);
+            if number == 0 && type_request == TypeRequest::App { number_res = 7 };
+        },
+        d => {
+            if let Ok(date_parse) = NaiveDate::parse_from_str(d, "%Y-%m-%d") {
+                date_res = date_parse;
+            }
+        },
+    }
+
+
+    (date_res, number_res)
+}
+
+fn weekday_to_date(day: Weekday) -> NaiveDate {
+    let today = Utc::now().date_naive();
+
+    let mut days_to_subtract = match today.weekday().num_days_from_monday() {
+        n if n >= day.num_days_from_monday() => n - day.num_days_from_monday(),
+        n => n + 7 - day.num_days_from_monday(),
+    };
+
+    if days_to_subtract == 0 {
+        days_to_subtract = 7;
+    }
+
+    today - Duration::days(days_to_subtract as i64)
 }
 
