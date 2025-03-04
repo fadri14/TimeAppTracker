@@ -116,10 +116,10 @@ time_app_tracker --add-notif pc --notif-time 180 --print-notif
 
 ##### Output
 ```
-List of notifications :
+	List of notifications :
 pc => 3h
 ```
 
 ## Limitation
-As the timer works with the cron service that is activated every minute, there is a margin of error of one minute each time an application is used.
+As the timer works with the cron service that is activated every minute, there is a margin of error of one minute each time an application is closed.
 

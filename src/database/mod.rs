@@ -335,7 +335,7 @@ impl Database {
             Ok((row.get::<_, String>(0)?, row.get::<_, u16>(1)?))
         })?;
 
-        println!("List of notifications :");
+        println!("\tList of notifications :");
         while let Some(Ok((app, time))) = rows.next() {
             println!("{} => {}", app, Time::new(time));
         }
