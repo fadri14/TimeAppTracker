@@ -81,7 +81,7 @@ time_app_tracker -q daydata --date tue
 
 ##### Output
 ```
-    Application time for 2025-02-25 :
+	Application time for 2025-02-25 :
 pc : 11h26
 librewolf : 8h26
 alacritty : 7h49
