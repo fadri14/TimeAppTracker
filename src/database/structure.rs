@@ -5,7 +5,7 @@ const NUMBER_MINUTES_IN_HOUR: u16 = 60;
 #[derive(PartialEq)]
 pub enum Type {
     Day,
-    App(String)
+    App(String),
 }
 
 #[derive(Default)]
@@ -16,7 +16,10 @@ pub struct Time {
 
 impl Time {
     pub fn new(mins: u16) -> Time {
-        Time { hour : mins / NUMBER_MINUTES_IN_HOUR, min : mins % NUMBER_MINUTES_IN_HOUR }
+        Time {
+            hour: mins / NUMBER_MINUTES_IN_HOUR,
+            min: mins % NUMBER_MINUTES_IN_HOUR,
+        }
     }
 }
 
@@ -24,11 +27,9 @@ impl std::fmt::Display for Time {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         if self.hour == 0 {
             return write!(f, "{}m", self.min);
-        }
-        else if self.min == 0 {
+        } else if self.min == 0 {
             return write!(f, "{}h", self.hour);
-        }
-        else if self.min < 10 {
+        } else if self.min < 10 {
             return write!(f, "{}h0{}", self.hour, self.min);
         }
         write!(f, "{}h{}", self.hour, self.min)
@@ -44,7 +45,12 @@ pub struct TimeApp {
 
 impl TimeApp {
     pub fn new(name: String, date: NaiveDate, mins: u16) -> TimeApp {
-        TimeApp { name, time : Time::new(mins), date, min_total : mins}
+        TimeApp {
+            name,
+            time: Time::new(mins),
+            date,
+            min_total: mins,
+        }
     }
 }
 
@@ -60,7 +66,11 @@ impl ListTimeApp {
             values.sort_unstable_by_key(|item| (item.min_total));
             values.reverse();
         }
-        ListTimeApp{ type_data, values , date }
+        ListTimeApp {
+            type_data,
+            values,
+            date,
+        }
     }
 }
 
@@ -82,8 +92,12 @@ impl std::fmt::Display for ListTimeApp {
                 for v in &self.values {
                     output.push_str(&format!("{} : {}\n", v.date, v.time));
                 }
-                
-                output.push_str(&format!("\n\tStats of time for {} :\n{}\n", name, Stat::new(&self.values)));
+
+                output.push_str(&format!(
+                    "\n\tStats of time for {} :\n{}\n",
+                    name,
+                    Stat::new(&self.values)
+                ));
 
                 write!(f, "{}", output)
             }
@@ -122,13 +136,21 @@ impl Stat {
             }
         }
 
-        Stat { max : Time::new(max), min : Time::new(min), sum : Time::new(sum), mean : Time::new(sum / values.len() as u16) }
+        Stat {
+            max: Time::new(max),
+            min: Time::new(min),
+            sum: Time::new(sum),
+            mean: Time::new(sum / values.len() as u16),
+        }
     }
 }
 
 impl std::fmt::Display for Stat {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Max : {}\nMin : {}\nSum : {}\nMean: {}", self.max, self.min, self.sum, self.mean)
+        write!(
+            f,
+            "Max : {}\nMin : {}\nSum : {}\nMean: {}",
+            self.max, self.min, self.sum, self.mean
+        )
     }
 }
-

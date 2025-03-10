@@ -1,5 +1,5 @@
 use argh::FromArgs;
-use chrono::{Utc, Datelike, Duration, NaiveDate, Weekday};
+use chrono::{Datelike, Duration, NaiveDate, Utc, Weekday};
 
 mod database;
 
@@ -10,7 +10,7 @@ const VERSION_NUMBER: &str = "v0.1.7";
 #[derive(PartialEq)]
 enum TypeRequest {
     Day,
-    App
+    App,
 }
 
 #[derive(FromArgs)]
@@ -91,32 +91,40 @@ fn main() {
 
     if let Some(mode) = param.state {
         if mode == "on" || mode == "off" {
-            database.change_settings("state", &mode).expect("state : Unable to work with database");
-        }
-        else if mode == "switch" {
-            database.switch_state().expect("state : Unable to work with database");
-        }
-        else {
+            database
+                .change_settings("state", &mode)
+                .expect("state : Unable to work with database");
+        } else if mode == "switch" {
+            database
+                .switch_state()
+                .expect("state : Unable to work with database");
+        } else {
             eprintln!("Error : there are only three possible modes [on|off|switch]");
         }
         flag = false;
     }
 
     if let Some(number) = param.storage {
-        database.change_settings("storage_size", &number.to_string()).expect("storage : Unable to work with database");
+        database
+            .change_settings("storage_size", &number.to_string())
+            .expect("storage : Unable to work with database");
         flag = false;
     }
 
     if param.settings {
-        database.display_settings().expect("settings : Unable to work with database");
+        database
+            .display_settings()
+            .expect("settings : Unable to work with database");
         flag = false;
     }
 
     match (param.add_notif, param.notif_time) {
         (Some(name), Some(time)) => {
-            database.add_notif(&name, time).expect("notif_app : Unable to work with database");
+            database
+                .add_notif(&name, time)
+                .expect("notif_app : Unable to work with database");
             flag = false;
-        },
+        }
         (None, None) => (),
         _ => {
             eprintln!("Error : you must use the arguments [--notif_app] and [--notif_time] at the same time");
@@ -124,41 +132,53 @@ fn main() {
         }
     }
 
-    if let Some(name) = param.del_notif{
-        database.del_notif(&name).expect("del_notif_app : Unable to work with database");
+    if let Some(name) = param.del_notif {
+        database
+            .del_notif(&name)
+            .expect("del_notif_app : Unable to work with database");
         flag = false;
     }
 
     if param.print_notif {
-        database.print_notif().expect("print_notif : Unable to work with database");
+        database
+            .print_notif()
+            .expect("print_notif : Unable to work with database");
         flag = false;
     }
 
     if param.update {
-        database.update().expect("update : Unable to work with database");
+        database
+            .update()
+            .expect("update : Unable to work with database");
         flag = false;
     }
 
     if let Some(name) = param.add {
-        database.add_app(name).expect("add : Unable to work with database");
+        database
+            .add_app(name)
+            .expect("add : Unable to work with database");
         flag = false;
     }
 
     if let Some(name) = param.del {
-        database.del_app(name).expect("del : Unable to work with database");
+        database
+            .del_app(name)
+            .expect("del : Unable to work with database");
         flag = false;
     }
 
     if let Some(query) = param.query {
         if query == "daydata" {
             let (date, number) = get_value_or_default(TypeRequest::Day, param.date, param.number);
-            database.print_day_data(date, number).expect("daydata : Unable to work with database");
-        }
-        else if query.len() >= 5 && query[0..4] == *"app-" {
+            database
+                .print_day_data(date, number)
+                .expect("daydata : Unable to work with database");
+        } else if query.len() >= 5 && query[0..4] == *"app-" {
             let (date, number) = get_value_or_default(TypeRequest::App, param.date, param.number);
-            database.print_app_data(query[4..].to_string(), date, number, param.reverse).expect("app : Unable to work with database");
-        }
-        else {
+            database
+                .print_app_data(query[4..].to_string(), date, number, param.reverse)
+                .expect("app : Unable to work with database");
+        } else {
             eprintln!("Query error. Please use [daydata] or [app-<name>] as query parameter");
         }
         flag = false;
@@ -169,7 +189,11 @@ fn main() {
     }
 }
 
-fn get_value_or_default(type_request: TypeRequest, date: Option<String>, number: u16) -> (NaiveDate, u16) {
+fn get_value_or_default(
+    type_request: TypeRequest,
+    date: Option<String>,
+    number: u16,
+) -> (NaiveDate, u16) {
     let date = date.clone().unwrap_or_else(|| String::from("today"));
     let mut date_res = Utc::now().date_naive();
 
@@ -179,8 +203,7 @@ fn get_value_or_default(type_request: TypeRequest, date: Option<String>, number:
             TypeRequest::Day => number_res = 1,
             TypeRequest::App => number_res = 10,
         }
-    }
-    else {
+    } else {
         number_res = number;
     }
 
@@ -196,15 +219,16 @@ fn get_value_or_default(type_request: TypeRequest, date: Option<String>, number:
         "sunday" | "sun" => date_res = weekday_to_date(Weekday::Sun),
         "last_week" | "lw" => {
             date_res = weekday_to_date(Weekday::Sun);
-            if number == 0 && type_request == TypeRequest::App { number_res = 7 };
-        },
+            if number == 0 && type_request == TypeRequest::App {
+                number_res = 7
+            };
+        }
         d => {
             if let Ok(date_parse) = NaiveDate::parse_from_str(d, "%Y-%m-%d") {
                 date_res = date_parse;
             }
-        },
+        }
     }
-
 
     (date_res, number_res)
 }
@@ -223,4 +247,3 @@ fn weekday_to_date(day: Weekday) -> NaiveDate {
 
     today - Duration::days(days_to_subtract as i64)
 }
-
