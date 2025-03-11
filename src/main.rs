@@ -5,7 +5,7 @@ mod database;
 
 use database::Database;
 
-const VERSION_NUMBER: &str = "v0.1.7";
+const VERSION_NUMBER: &str = "v0.1.71";
 
 #[derive(PartialEq)]
 enum TypeRequest {
@@ -21,11 +21,11 @@ struct Params {
     #[argh(switch, short = 'v')]
     version: bool,
 
-    /// switch between on and off state
+    /// param: <[on|off|switch]>. set counter status, Use one of the following options
     #[argh(option)]
     state: Option<String>,
 
-    /// change the size of the storage
+    /// param: <digit>. change the size of the storage
     #[argh(option)]
     storage: Option<u16>,
 
@@ -33,15 +33,15 @@ struct Params {
     #[argh(switch, short = 's')]
     settings: bool,
 
-    /// enables notification mode for an application
+    /// param: <app_name>. enables notification mode for an application
     #[argh(option)]
     add_notif: Option<String>,
 
-    /// indicates the time in minutes before a notification is sent
+    /// param: <time>. indicates the time in minutes before a notification is sent
     #[argh(option)]
     notif_time: Option<u16>,
 
-    /// removes notification functionality for an application
+    /// param: <app_name>. removes notification functionality for an application
     #[argh(option)]
     del_notif: Option<String>,
 
@@ -53,11 +53,11 @@ struct Params {
     #[argh(switch, short = 'u')]
     update: bool,
 
-    /// add a application
+    /// param: <app_name>. add a application
     #[argh(option)]
     add: Option<String>,
 
-    /// delete a application
+    /// param: <app_name>. delete a application
     #[argh(option)]
     del: Option<String>,
 
@@ -65,11 +65,11 @@ struct Params {
     #[argh(option, short = 'q')]
     query: Option<String>,
 
-    /// select the date of the retrieved data, foramt : YYYY-mm-dd. you can also use keywords such as yesterday, last_week or a day of the week (monday…).
+    /// param: <date>. select the date of the retrieved data, foramt : YYYY-mm-dd. you can also use keywords such as yesterday, last_week or a day of the week (monday…).
     #[argh(option)]
     date: Option<String>,
 
-    /// select the number of day of the retrieved data
+    /// param: <digit>. select the number of day of the retrieved data
     #[argh(option, short = 'n', default = "0")]
     number: u16,
 
@@ -171,7 +171,7 @@ fn main() {
         if query == "daydata" {
             let (date, number) = get_value_or_default(TypeRequest::Day, param.date, param.number);
             database
-                .print_day_data(date, number)
+                .print_day_data(date, number, param.reverse)
                 .expect("daydata : Unable to work with database");
         } else if query.len() >= 5 && query[0..4] == *"app-" {
             let (date, number) = get_value_or_default(TypeRequest::App, param.date, param.number);

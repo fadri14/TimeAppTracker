@@ -247,7 +247,7 @@ impl Database {
 
     fn get_time_app(&self, name: &str, date: NaiveDate, number_days: u16) -> Result<Vec<TimeApp>> {
         let query = format!(
-            "SELECT date, [{}] FROM time WHERE date <= '{}' and date >= DATE('{}', '-{} days') ORDER BY date DESC",
+            "SELECT date, [{}] FROM time WHERE date <= '{}' and date > DATE('{}', '-{} days') ORDER BY date DESC",
             name, date, date, number_days);
         let mut stmt = self.conn.prepare(&query)?;
         let rows = stmt.query_map([], |row| {
@@ -270,11 +270,20 @@ impl Database {
         Ok(values)
     }
 
-    pub fn print_day_data(&self, date: NaiveDate, number_days: u16) -> Result<()> {
-        for i in 0..number_days {
-            let date_query = date - chrono::Duration::days(i as i64);
-            let values = ListTimeApp::new(Type::Day, self.get_time_day(date_query)?, date_query);
-            println!("{values}\n");
+    pub fn print_day_data(&self, date: NaiveDate, number_days: u16, reverse: bool) -> Result<()> {
+        if !reverse {
+            for i in 0..number_days {
+                let date_query = date - chrono::Duration::days(i as i64);
+                let values = ListTimeApp::new(Type::Day, self.get_time_day(date_query)?, date_query);
+                println!("{values}");
+            }
+        }
+        else {
+            for i in (0..number_days).rev() {
+                let date_query = date - chrono::Duration::days(i as i64);
+                let values = ListTimeApp::new(Type::Day, self.get_time_day(date_query)?, date_query);
+                println!("{values}");
+            }
         }
         Ok(())
     }
