@@ -37,22 +37,27 @@ CLI to track usage times for pc and applications
 
 Options:
   -v, --version     to get the current version number
-  --state           switch between on and off state
-  --storage         change the size of the storage
+  --state           param: <[on|off|switch]>. set counter status, Use one of the
+                    following options
+  --storage         param: <digit>. change the size of the storage
   -s, --settings    get the settings of this application
-  --add-notif       enables notification mode for an application
-  --notif-time      indicates the time in minutes before a notification is sent
-  --del-notif       removes notification functionality for an application
+  --add-notif       param: <app_name>. enables notification mode for an
+                    application
+  --notif-time      param: <time>. indicates the time in minutes before a
+                    notification is sent
+  --del-notif       param: <app_name>. removes notification functionality for an
+                    application
   --print-notif     displays the list of notifications
   -u, --update      launch update
-  --add             add a application
-  --del             delete a application
+  --add             param: <app_name>. add a application
+  --del             param: <app_name>. delete a application
   -q, --query       to retrieve data either for a day's info with [daydata] or
                     an application's info with [app-<name>]
-  --date            select the date of the retrieved data, foramt : YYYY-mm-dd.
-                    you can also use keywords such as yesterday, last_week or a
-                    day of the week (monday…).
-  -n, --number      select the number of day of the retrieved data
+  --date            param: <date>. select the date of the retrieved data, foramt
+                    : YYYY-mm-dd. you can also use keywords such as yesterday,
+                    last_week or a day of the week (monday…).
+  -n, --number      param: <digit>. select the number of day of the retrieved
+                    data
   -r, --reverse     inverts the result for an application
   -h, --help, help  display usage information
 ```
