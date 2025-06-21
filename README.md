@@ -31,7 +31,7 @@ time_app_tracker --help
 
 #### Output of help
 ```
-Usage: time_app_tracker [-v] [--state <state>] [--storage <storage>] [-s] [--add-notif <add-notif>] [--notif-time <notif-time>] [--del-notif <del-notif>] [--print-notif] [-u] [--add <add>] [--del <del>] [-q <query>] [--date <date>] [-n <number>] [-r]
+Usage: time_app_tracker [-v] [--state <state>] [--storage <storage>] [-s] [--add-notif <add-notif>] [--notif-time <notif-time>] [--del-notif <del-notif>] [--print-notif] [-u] [--add <add>] [--del <del>] [-q <query>] [--date <date>] [-n <number>] [-r] [-c <color>] [-t]
 
 CLI to track usage times for pc and applications
 
@@ -59,10 +59,18 @@ Options:
   -n, --number      param: <digit>. select the number of day of the retrieved
                     data
   -r, --reverse     inverts the result for an application
+  -c, --color       color of tui
+  -t, --tui         launch tui
   -h, --help, help  display usage information
 ```
 
-### Example of interface
+### TUI Example
+##### Command
+```
+time_app_tracker -t
+```
+
+### CLI Example
 #### The data of the day
 ##### Command
 ```

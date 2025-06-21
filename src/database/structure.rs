@@ -37,10 +37,10 @@ impl std::fmt::Display for Time {
 }
 
 pub struct TimeApp {
-    name: String,
-    time: Time,
+    pub name: String,
+    pub time: Time,
     pub date: NaiveDate,
-    min_total: u16,
+    pub min_total: u16,
 }
 
 impl TimeApp {
@@ -107,10 +107,10 @@ impl std::fmt::Display for ListTimeApp {
 
 #[derive(Default)]
 pub struct Stat {
-    max: Time,
-    min: Time,
-    sum: Time,
-    mean: Time,
+    pub max: Time,
+    pub min: Time,
+    pub sum: Time,
+    pub mean: Time,
 }
 
 impl Stat {

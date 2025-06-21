@@ -1,7 +1,7 @@
 [package]
 name = "time_app_tracker"
 version = "0.1.71"
-edition = "2021"
+edition = "2024"
 license = "MIT"
 description = "Count the time you spend on the pc and the desired applications"
 repository = "https://github.com/fadri14/TimeAppTracker"
@@ -9,7 +9,10 @@ readme = "README.md"
 keywords = ["time"]
 
 [dependencies]
-rusqlite = "0.33.0"
-chrono = "0.4.39"
+rusqlite = "0.36.0"
+chrono = "0.4.41"
 argh = "0.1.13"
-notify-rust = "4.11.5"
+notify-rust = "4.11.7"
+ratatui = "0.29.0"
+crossterm = "0.29.0"
+tui-input = "0.12.1"

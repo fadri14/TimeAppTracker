@@ -1,12 +1,12 @@
-use rusqlite::{Connection, Result, params};
 use chrono::{Duration, NaiveDate};
 use notify_rust::Notification;
+use rusqlite::{Connection, Result, params};
 
 mod backend;
 mod structure;
 
 use backend::*;
-use structure::*;
+pub use structure::*;
 
 const DEFAULT_NUMBER_DAYS_SAVED: u16 = 100;
 
@@ -17,12 +17,16 @@ struct Settings {
 
 impl std::fmt::Display for Settings {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "\tSettings :\nState : {}\nStorage size : {}", self.state, self.storage_size)
+        write!(
+            f,
+            "\tSettings :\nState : {}\nStorage size : {}",
+            self.state, self.storage_size
+        )
     }
 }
 
 pub struct Database {
-    conn: Connection
+    conn: Connection,
 }
 
 impl Database {
@@ -53,7 +57,7 @@ impl Database {
             (),
         )?;
 
-        Ok(Database{ conn })
+        Ok(Database { conn })
     }
 
     pub fn update(&self) -> Result<()> {
@@ -73,7 +77,8 @@ impl Database {
             panic!("The number of columns and data are not the same.");
         }
 
-        self.conn.execute("DELETE FROM time WHERE date = CURRENT_DATE", (),)?;
+        self.conn
+            .execute("DELETE FROM time WHERE date = CURRENT_DATE", ())?;
 
         update_values(&column_names, &mut values);
         self.check_notif(&column_names, &values)?;
@@ -92,7 +97,8 @@ impl Database {
 
         self.conn.execute(
             "DELETE FROM time WHERE JULIANDAY(DATE()) - JULIANDAY(date) > ?1",
-            ((&storage_size),),)?;
+            ((&storage_size),),
+        )?;
 
         Ok(())
     }
@@ -100,9 +106,7 @@ impl Database {
     fn get_column_name(&self) -> Result<Vec<String>> {
         let mut stmt = self.conn.prepare("PRAGMA table_info(time)")?;
 
-        let column_names = stmt.query_map([], |row| {
-            row.get::<_, String>(1)
-        })?;
+        let column_names = stmt.query_map([], |row| row.get::<_, String>(1))?;
 
         let mut names = Vec::new();
         for name in column_names {
@@ -113,7 +117,9 @@ impl Database {
     }
 
     fn get_values(&self) -> Result<Vec<u16>> {
-        let mut stmt = self.conn.prepare("SELECT * FROM time WHERE date = CURRENT_DATE")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT * FROM time WHERE date = CURRENT_DATE")?;
 
         let column_count = stmt.column_count();
 
@@ -131,7 +137,7 @@ impl Database {
             return Ok(values);
         }
 
-        Ok(vec![0 ; column_count-1])
+        Ok(vec![0; column_count - 1])
     }
 
     pub fn add_app(&self, name: String) -> Result<()> {
@@ -163,7 +169,7 @@ impl Database {
         Ok(())
     }
 
-    fn contain_names(&self, name: &String) -> Result<bool> {
+    pub fn contain_names(&self, name: &String) -> Result<bool> {
         let column_names = self.get_column_name()?;
         Ok(column_names.contains(name))
     }
@@ -179,7 +185,10 @@ impl Database {
             storage_size = value.parse::<u16>().unwrap_or(DEFAULT_NUMBER_DAYS_SAVED);
         }
 
-        Ok(Settings { state, storage_size })
+        Ok(Settings {
+            state,
+            storage_size,
+        })
     }
 
     pub fn display_settings(&self) -> Result<()> {
@@ -188,42 +197,46 @@ impl Database {
     }
 
     fn get_attribute(&self, name: &str) -> Result<Option<String>> {
-        let mut stmt = self.conn.prepare("SELECT value FROM settings WHERE attribute = ?1")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT value FROM settings WHERE attribute = ?1")?;
 
-        let mut rows = stmt.query_map([&name], |row| {
-            Ok(row.get(0))
-        })?;
+        let mut rows = stmt.query_map([&name], |row| Ok(row.get(0)))?;
 
         if let Some(Ok(Ok(value))) = rows.next() {
-            return Ok(Some(value))
+            return Ok(Some(value));
         }
 
         Ok(None)
     }
 
     pub fn change_settings(&self, name: &str, value: &str) -> Result<()> {
-        self.conn.execute("DELETE FROM settings WHERE attribute = ?1", ((&name),),)?;
-        self.conn.execute("INSERT INTO settings (attribute, value) VALUES (?1, ?2)", (&name, &value),)?;
+        self.conn
+            .execute("DELETE FROM settings WHERE attribute = ?1", ((&name),))?;
+        self.conn.execute(
+            "INSERT INTO settings (attribute, value) VALUES (?1, ?2)",
+            (&name, &value),
+        )?;
         Ok(())
     }
 
     pub fn switch_state(&self) -> Result<()> {
         match self.get_attribute("state")? {
             Some(value) if value == "on" => self.change_settings("state", "off")?,
-            _ => self.change_settings("state", "on")?
+            _ => self.change_settings("state", "on")?,
         }
 
         Ok(())
     }
 
-    fn get_time_day(&self, date: NaiveDate) -> Result<Vec<TimeApp>> {
+    pub fn get_time_day(&self, date: NaiveDate) -> Result<Vec<TimeApp>> {
         let column_names = self.get_column_name()?;
 
         let mut stmt = self.conn.prepare("SELECT * FROM time WHERE date = ?1")?;
         let mut rows = stmt.query_map(params![date.to_string()], |row| {
             let mut values: Vec<TimeApp> = Vec::new();
             for (i, name) in column_names.iter().enumerate() {
-                values.push(TimeApp::new(name.clone(), date, row.get::<_, u16>(i+1)?))
+                values.push(TimeApp::new(name.clone(), date, row.get::<_, u16>(i + 1)?))
             }
             Ok(values)
         })?;
@@ -245,14 +258,25 @@ impl Database {
         Ok(values)
     }
 
-    fn get_time_app(&self, name: &str, date: NaiveDate, number_days: u16) -> Result<Vec<TimeApp>> {
+    pub fn get_time_app(
+        &self,
+        name: &str,
+        date: NaiveDate,
+        number_days: u16,
+    ) -> Result<Vec<TimeApp>> {
         let query = format!(
             "SELECT date, [{}] FROM time WHERE date <= '{}' and date > DATE('{}', '-{} days') ORDER BY date DESC",
-            name, date, date, number_days);
+            name, date, date, number_days
+        );
         let mut stmt = self.conn.prepare(&query)?;
         let rows = stmt.query_map([], |row| {
-            let date = NaiveDate::parse_from_str(&row.get::<_, String>(0)?, "%Y-%m-%d").expect("Unable to retrieve a date");
-            Ok(TimeApp::new(SCREENTIME.to_string(), date, row.get::<_, u16>(1)?))
+            let date = NaiveDate::parse_from_str(&row.get::<_, String>(0)?, "%Y-%m-%d")
+                .expect("Unable to retrieve a date");
+            Ok(TimeApp::new(
+                SCREENTIME.to_string(),
+                date,
+                row.get::<_, u16>(1)?,
+            ))
         })?;
 
         let mut values: Vec<TimeApp> = Vec::new();
@@ -263,7 +287,10 @@ impl Database {
         for i in 0..number_days {
             let deadline = date - Duration::days(i as i64);
             if i == values.len() as u16 || values[i as usize].date != deadline {
-                values.insert(i as usize, TimeApp::new(SCREENTIME.to_string(), deadline, 0));
+                values.insert(
+                    i as usize,
+                    TimeApp::new(SCREENTIME.to_string(), deadline, 0),
+                );
             }
         }
 
@@ -274,22 +301,29 @@ impl Database {
         if !reverse {
             for i in 0..number_days {
                 let date_query = date - chrono::Duration::days(i as i64);
-                let values = ListTimeApp::new(Type::Day, self.get_time_day(date_query)?, date_query);
+                let values =
+                    ListTimeApp::new(Type::Day, self.get_time_day(date_query)?, date_query);
                 println!("{values}");
             }
-        }
-        else {
+        } else {
             for i in (0..number_days).rev() {
                 let date_query = date - chrono::Duration::days(i as i64);
-                let values = ListTimeApp::new(Type::Day, self.get_time_day(date_query)?, date_query);
+                let values =
+                    ListTimeApp::new(Type::Day, self.get_time_day(date_query)?, date_query);
                 println!("{values}");
             }
         }
         Ok(())
     }
 
-    pub fn print_app_data(&self, name: String, date: NaiveDate, number_days: u16, reverse: bool) -> Result<()> {
-        if ! self.contain_names(&name)? {
+    pub fn print_app_data(
+        &self,
+        name: String,
+        date: NaiveDate,
+        number_days: u16,
+        reverse: bool,
+    ) -> Result<()> {
+        if !self.contain_names(&name)? {
             eprintln!("Error : This application is not followed");
             return Ok(());
         }
@@ -305,31 +339,43 @@ impl Database {
     }
 
     pub fn add_notif(&self, name: &String, time: u16) -> Result<()> {
-        if ! self.contain_names(name)? {
+        if !self.contain_names(name)? {
             eprintln!("Error : This application is not followed");
             return Ok(());
         }
 
         self.del_notif(name)?;
-        self.conn.execute("INSERT INTO notification (app, time) VALUES (?1, ?2)", (name, &time),)?;
+        self.conn.execute(
+            "INSERT INTO notification (app, time) VALUES (?1, ?2)",
+            (name, &time),
+        )?;
 
         Ok(())
     }
 
     pub fn del_notif(&self, name: &str) -> Result<()> {
-        self.conn.execute("DELETE FROM notification WHERE app = ?1", ((name),),)?;
+        self.conn
+            .execute("DELETE FROM notification WHERE app = ?1", ((name),))?;
         Ok(())
     }
 
     fn check_notif(&self, names: &[String], values: &[u16]) -> Result<()> {
         for (i, name) in names.iter().enumerate() {
-            let mut stmt = self.conn.prepare(&format!("SELECT 1 FROM notification WHERE app = '{}' AND time = {} LIMIT 1", &name, values[i]))?;
+            let mut stmt = self.conn.prepare(&format!(
+                "SELECT 1 FROM notification WHERE app = '{}' AND time = {} LIMIT 1",
+                &name, values[i]
+            ))?;
             let mut rows = stmt.query_map(params![], |_| {
                 Notification::new()
                     .summary(&format!("Time passed for {}", &name))
-                    .body(&format!("It has been {} for you to use {}. You have exceeded the set limit", Time::new(values[i]), &name))
+                    .body(&format!(
+                        "It has been {} for you to use {}. You have exceeded the set limit",
+                        Time::new(values[i]),
+                        &name
+                    ))
                     .appname("Time App Tracker")
-                    .show().expect("Impossible d'envoyer de notification");
+                    .show()
+                    .expect("Impossible d'envoyer de notification");
                 Ok(())
             })?;
 
@@ -338,7 +384,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn print_notif(&self) ->Result<()> {
+    pub fn print_notif(&self) -> Result<()> {
         let mut stmt = self.conn.prepare("SELECT app, time FROM notification")?;
         let mut rows = stmt.query_map(params![], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, u16>(1)?))
@@ -353,4 +399,3 @@ impl Database {
         Ok(())
     }
 }
-

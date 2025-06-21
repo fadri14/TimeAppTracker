@@ -1,11 +1,15 @@
 use argh::FromArgs;
 use chrono::{Datelike, Duration, NaiveDate, Utc, Weekday};
+use ratatui::style::Color;
+use std::io;
+use std::str::FromStr;
 
 mod database;
+mod tui;
 
 use database::Database;
 
-const VERSION_NUMBER: &str = "v0.1.71";
+const VERSION_NUMBER: &str = "v0.2.0";
 
 #[derive(PartialEq)]
 enum TypeRequest {
@@ -76,10 +80,19 @@ struct Params {
     /// inverts the result for an application
     #[argh(switch, short = 'r')]
     reverse: bool,
+
+    /// color of tui
+    #[argh(option, short = 'c')]
+    color: Option<String>,
+
+    /// launch tui
+    #[argh(switch, short = 't')]
+    tui: bool,
 }
 
-fn main() {
+fn main() -> io::Result<()> {
     let param: Params = argh::from_env();
+
     let mut flag = true;
 
     let database = Database::new().expect("Unable to work with database");
@@ -127,7 +140,9 @@ fn main() {
         }
         (None, None) => (),
         _ => {
-            eprintln!("Error : you must use the arguments [--notif_app] and [--notif_time] at the same time");
+            eprintln!(
+                "Error : you must use the arguments [--notif_app] and [--notif_time] at the same time"
+            );
             flag = false;
         }
     }
@@ -184,9 +199,20 @@ fn main() {
         flag = false;
     }
 
+    if param.tui {
+        let color = match param.color {
+            Some(color) => Color::from_str(&color).unwrap_or(Color::LightBlue),
+            _ => Color::LightBlue,
+        };
+        tui::start(database, color)?;
+        flag = false;
+    }
+
     if flag {
         println!("run `time_app_tracker --help` for help");
     }
+
+    Ok(())
 }
 
 fn get_value_or_default(
