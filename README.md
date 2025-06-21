@@ -69,6 +69,11 @@ Options:
 ```
 time_app_tracker -t
 ```
+###### Day chart
+![tui_day](https://github.com/user-attachments/assets/e6f65baa-c2c3-4395-bf74-4767962e1e13)
+
+###### Application graphic
+![tui_app](https://github.com/user-attachments/assets/d182fc2e-a7c8-4100-8d56-ed718f3e2262)
 
 ### CLI Example
 #### The data of the day
