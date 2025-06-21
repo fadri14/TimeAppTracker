@@ -59,7 +59,9 @@ Options:
   -n, --number      param: <digit>. select the number of day of the retrieved
                     data
   -r, --reverse     inverts the result for an application
-  -c, --color       color of tui
+  -c, --color       color of tui. Choice : Black, Red, Green, Yellow, Blue,
+                    Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen,
+                    LightYellow, LightBlue, LightMagenta, LightCyan, White
   -t, --tui         launch tui
   -h, --help, help  display usage information
 ```

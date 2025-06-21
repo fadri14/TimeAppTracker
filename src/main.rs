@@ -81,7 +81,7 @@ struct Params {
     #[argh(switch, short = 'r')]
     reverse: bool,
 
-    /// color of tui
+    /// color of tui. Choice : Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, LightYellow, LightBlue, LightMagenta, LightCyan, White
     #[argh(option, short = 'c')]
     color: Option<String>,
 
